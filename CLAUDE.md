@@ -200,6 +200,231 @@ DELIMITER ;
 - [ ] 数据库备份或导出
 - [ ] 项目源代码（如有应用层实现）
 
+## Git操作规范
+
+本项目使用GitHub进行版本控制和协作跟踪。所有开发者必须遵循以下规范以保证代码质量和团队协作效率。
+
+### 项目仓库
+
+- **仓库地址**: https://github.com/Tanhhhhtjy/BUAA-2025-DataBase-Social_Media_Sentiment_Analysis.git
+- **默认分支**: master（主分支）
+- **连接方式**: HTTPS（推荐）或SSH
+
+### 分支管理规范
+
+**主要分支：**
+- `master` - 主分支，包含稳定的、可发布的代码。每次提交需要经过审查
+- `develop` - 开发分支，用于集成功能分支。应保持可运行状态
+
+**功能分支命名规范：**
+```
+feature/功能名称      # 新功能开发
+bugfix/问题名称       # 问题修复
+docs/文档名称         # 文档更新
+db/数据库功能名称     # 数据库相关修改
+```
+
+**示例：**
+```
+feature/user-sentiment-analysis      # 用户情感分析功能
+bugfix/hashtag-extraction             # 话题提取问题修复
+db/create-posts-table                 # 创建帖子表
+docs/api-documentation                # API文档更新
+```
+
+### Commit 提交规范
+
+**格式：**
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Type 类型（必须）：**
+- `feat`: 新增功能或数据库特性
+- `fix`: 修复问题或SQL逻辑错误
+- `docs`: 文档更新或说明
+- `style`: 代码格式、注释等（不影响功能）
+- `refactor`: 代码重构或SQL优化
+- `test`: 测试相关
+- `chore`: 依赖更新、构建工具等
+- `db`: 数据库相关操作（建表、存储过程、触发器等）
+
+**Scope 作用域（可选但推荐）：**
+指定影响的范围，如：users、posts、comments、sentiments等表名或功能模块
+
+**Subject 主题（必须）：**
+- 使用祈使句（如 "add" 而不是 "added"）
+- 不超过50个字符
+- 首字母小写
+- 不以句号结尾
+
+**Body 主体（可选但建议）：**
+- 对变更的详细描述
+- 解释"是什么"和"为什么"，而不是"怎样"
+- 每行不超过72个字符
+
+**Footer 页脚（可选）：**
+- 关闭相关Issue（如有）：Closes #123
+- 破坏性改动说明：BREAKING CHANGE: ...
+
+**Commit 示例：**
+
+```
+feat(users): add user sentiment preference table
+
+Add a new table to store user sentiment preferences for better
+personalization of recommendation system.
+
+- Create Users_Sentiment_Prefs table with proper constraints
+- Add foreign key to Users table
+- Create index on UserID for query optimization
+
+Closes #15
+```
+
+```
+db(posts): optimize post query with composite index
+
+Create a composite index on (CreatedAt, UserID) to improve
+performance of trending posts queries.
+
+Performance improvement: 40% faster query execution time
+```
+
+```
+fix(comments): handle null sentiment values correctly
+
+Fix the issue where NULL sentiment values were causing
+exceptions in sentiment analysis trigger.
+```
+
+### 日常开发流程
+
+**1. 更新本地仓库：**
+```bash
+git fetch origin                    # 获取远程最新信息
+git pull origin master              # 拉取主分支最新代码
+```
+
+**2. 创建功能分支：**
+```bash
+# 基于master创建功能分支
+git checkout -b feature/hashtag-optimization
+
+# 或使用switch命令（Git 2.23+）
+git switch -c feature/hashtag-optimization
+```
+
+**3. 开发和提交：**
+```bash
+# 查看改动
+git status
+
+# 添加更改
+git add <file>              # 添加特定文件
+git add .                   # 添加所有更改
+
+# 提交
+git commit -m "feat(hashtags): optimize hashtag extraction algorithm"
+```
+
+**4. 保持分支最新：**
+```bash
+# 定期同步主分支
+git fetch origin
+git rebase origin/master
+```
+
+**5. 推送到远程：**
+```bash
+# 首次推送（创建远程跟踪分支）
+git push -u origin feature/hashtag-optimization
+
+# 后续推送
+git push origin feature/hashtag-optimization
+```
+
+**6. 创建Pull Request：**
+- 在GitHub上创建PR，将功能分支合并到develop或master
+- 填写详细的PR描述，说明修改内容和为什么需要这些修改
+- 等待审核和CI检查通过
+- 获得审批后合并PR
+
+**7. 合并和清理：**
+```bash
+# 合并后删除本地分支
+git branch -d feature/hashtag-optimization
+
+# 删除远程分支
+git push origin --delete feature/hashtag-optimization
+```
+
+### 常用命令快速参考
+
+```bash
+# 查看状态和日志
+git status                              # 查看当前分支状态
+git log --oneline -10                   # 查看最近10次提交
+git log --all --graph --decorate        # 查看完整分支图
+git diff                                # 查看未暂存的改动
+git diff --staged                       # 查看已暂存的改动
+
+# 分支操作
+git branch -a                           # 列出所有分支
+git branch -D <branch-name>             # 强制删除分支
+git checkout <branch-name>              # 切换分支
+git merge <branch-name>                 # 合并分支
+git rebase <branch-name>                # 变基操作
+
+# 撤销操作
+git restore <file>                      # 撤销文件修改
+git restore --staged <file>             # 取消暂存
+git reset HEAD~1                        # 撤销最后一次提交（保留更改）
+git reset --hard HEAD~1                 # 撤销最后一次提交（不保留更改）
+
+# 远程操作
+git fetch origin                        # 获取远程更新
+git pull origin <branch>                # 拉取并合并
+git push origin <branch>                # 推送到远程
+```
+
+### 合作规范
+
+**代码审查（Code Review）：**
+- 所有提交到master分支的代码必须通过Pull Request审查
+- 至少需要一个团队成员的批准
+- 审查者应检查：
+  - SQL语法和逻辑正确性
+  - 遵循命名规范和代码风格
+  - 数据库约束的正确性
+  - 性能影响
+  - 测试覆盖
+
+**冲突解决：**
+- 如果出现merge冲突，手动编辑冲突文件
+- 标记冲突区域已解决后继续merge
+```bash
+git add <resolved-file>
+git commit -m "merge: resolve conflicts in <description>"
+```
+
+**大文件注意事项：**
+- 不提交数据库dump文件（除非必要）
+- 不提交敏感信息（密码、API密钥等）
+- 不提交IDE生成的文件（在.gitignore中已配置）
+
+### 工作量追踪
+
+为了便于评估每个成员的工作量：
+- 在commit message中清晰表明做了什么
+- 使用有意义的分支名称
+- 定期创建commit而不是一次性提交大量代码
+- GitHub会自动统计contributors和commit数量
+
 ## 故障排除
 
 **常见问题：**
@@ -207,3 +432,9 @@ DELIMITER ;
 - **连接失败** - 检查DAS配置，重新测试连接
 - **数据不一致** - 验证约束设置和触发器逻辑
 - **性能问题** - 检查索引设计，优化复杂查询
+
+**Git相关问题：**
+- **SSH连接失败** - 改用HTTPS方式：`git remote set-url origin https://github.com/...`
+- **无法推送** - 检查权限，确保已设置GitHub凭证
+- **Merge冲突** - 手动解决冲突后重新提交
+- **提交历史混乱** - 使用rebase整理提交：`git rebase -i HEAD~n`
