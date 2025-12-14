@@ -13,8 +13,6 @@
 -- 触发时机：AFTER INSERT ON Posts
 -- ============================================================================
 
-DELIMITER //
-
 CREATE TRIGGER extract_hashtags
 AFTER INSERT ON Posts
 FOR EACH ROW
@@ -50,9 +48,7 @@ BEGIN
     FROM Post_Hashtags
     WHERE PostID = NEW.PostID;
 
-END//
-
-DELIMITER ;
+END;
 
 -- ============================================================================
 -- 触发器工作示例：
@@ -78,8 +74,6 @@ DELIMITER ;
 -- 此触发器作为备份/演示之用
 -- ============================================================================
 
-DELIMITER //
-
 CREATE TRIGGER cascade_delete_comments
 BEFORE DELETE ON Posts
 FOR EACH ROW
@@ -96,9 +90,7 @@ BEGIN
     DELETE FROM Post_Sentiments
     WHERE PostID = OLD.PostID;
 
-END//
-
-DELIMITER ;
+END;
 
 -- ============================================================================
 -- 触发器3: update_post_timestamp - 更新帖子时间戳

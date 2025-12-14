@@ -13,8 +13,6 @@
 -- 实现方式：基于关键词匹配的Mock分析（可扩展为API调用）
 -- ============================================================================
 
-DELIMITER //
-
 CREATE PROCEDURE AnalyzeSentiment(IN p_post_id INT)
 BEGIN
     DECLARE v_content TEXT;
@@ -87,9 +85,7 @@ BEGIN
         Score = v_score,
         CreatedAt = NOW();
 
-END//
-
-DELIMITER ;
+END;
 
 -- ============================================================================
 -- 存储过程2: BatchAnalyzeSentiment - 批量情感分析
@@ -97,8 +93,6 @@ DELIMITER ;
 -- 目的：批量分析多条帖子的情感
 -- 输入参数：p_start_id - 开始PostID, p_end_id - 结束PostID（可选）
 -- ============================================================================
-
-DELIMITER //
 
 CREATE PROCEDURE BatchAnalyzeSentiment(
     IN p_start_id INT,
@@ -136,9 +130,7 @@ BEGIN
     -- 关闭游标
     CLOSE v_posts_cursor;
 
-END//
-
-DELIMITER ;
+END;
 
 -- ============================================================================
 -- 存储过程3: GenerateDailyReport - 生成日报
@@ -146,8 +138,6 @@ DELIMITER ;
 -- 目的：生成每日的舆情统计报告
 -- 输入参数：p_date - 报告日期（默认为今天）
 -- ============================================================================
-
-DELIMITER //
 
 CREATE PROCEDURE GenerateDailyReport(IN p_date DATE)
 BEGIN
@@ -212,9 +202,7 @@ BEGIN
         ROUND(v_neutral_count * 100.0 / NULLIF(v_total_posts, 0), 2) AS 中立占比,
         ROUND(v_negative_count * 100.0 / NULLIF(v_total_posts, 0), 2) AS 负面占比;
 
-END//
-
-DELIMITER ;
+END;
 
 -- ============================================================================
 -- 存储过程4: GetUserStatistics - 获取用户统计信息
@@ -222,8 +210,6 @@ DELIMITER ;
 -- 目的：获取指定用户的发布统计信息
 -- 输入参数：p_user_id - 用户ID
 -- ============================================================================
-
-DELIMITER //
 
 CREATE PROCEDURE GetUserStatistics(IN p_user_id INT)
 BEGIN
@@ -240,9 +226,7 @@ BEGIN
     WHERE u.UserID = p_user_id
     GROUP BY u.UserID, u.Username;
 
-END//
-
-DELIMITER ;
+END;
 
 -- ============================================================================
 -- 存储过程创建完成
