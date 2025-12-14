@@ -29,7 +29,7 @@ CREATE TABLE Posts (
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
-    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE COMMENT '外键：关联Users表',
+    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
     INDEX idx_user_id (UserID),
     INDEX idx_created_at (CreatedAt)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子表';
@@ -44,8 +44,8 @@ CREATE TABLE Comments (
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     UpdatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
 
-    FOREIGN KEY (PostID) REFERENCES Posts(PostID) ON DELETE CASCADE COMMENT '外键：关联Posts表',
-    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE COMMENT '外键：关联Users表',
+    FOREIGN KEY (PostID) REFERENCES Posts(PostID) ON DELETE CASCADE,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
     INDEX idx_post_id (PostID),
     INDEX idx_user_id (UserID),
     INDEX idx_created_at (CreatedAt)
@@ -69,9 +69,9 @@ CREATE TABLE Post_Hashtags (
     HashtagID INT NOT NULL COMMENT '话题ID',
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
-    FOREIGN KEY (PostID) REFERENCES Posts(PostID) ON DELETE CASCADE COMMENT '外键：关联Posts表',
-    FOREIGN KEY (HashtagID) REFERENCES Hashtags(HashtagID) ON DELETE CASCADE COMMENT '外键：关联Hashtags表',
-    UNIQUE KEY unique_post_hashtag (PostID, HashtagID) COMMENT '复合唯一约束：防止重复关联',
+    FOREIGN KEY (PostID) REFERENCES Posts(PostID) ON DELETE CASCADE,
+    FOREIGN KEY (HashtagID) REFERENCES Hashtags(HashtagID) ON DELETE CASCADE,
+    UNIQUE KEY unique_post_hashtag (PostID, HashtagID),
     INDEX idx_post_id (PostID),
     INDEX idx_hashtag_id (HashtagID)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='帖子-话题关联表';
@@ -95,9 +95,9 @@ CREATE TABLE Post_Sentiments (
     Score DECIMAL(5, 2) NOT NULL DEFAULT 0.5 COMMENT '情感评分（0-1之间）',
     CreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
-    FOREIGN KEY (PostID) REFERENCES Posts(PostID) ON DELETE CASCADE COMMENT '外键：关联Posts表',
-    FOREIGN KEY (SentimentID) REFERENCES Sentiments(SentimentID) ON DELETE CASCADE COMMENT '外键：关联Sentiments表',
-    UNIQUE KEY unique_post_sentiment (PostID, SentimentID) COMMENT '复合唯一约束：每个帖子每个情感最多一条记录',
+    FOREIGN KEY (PostID) REFERENCES Posts(PostID) ON DELETE CASCADE,
+    FOREIGN KEY (SentimentID) REFERENCES Sentiments(SentimentID) ON DELETE CASCADE,
+    UNIQUE KEY unique_post_sentiment (PostID, SentimentID),
     INDEX idx_post_id (PostID),
     INDEX idx_sentiment_id (SentimentID),
     INDEX idx_score (Score)
