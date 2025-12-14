@@ -3,17 +3,10 @@
 -- ============================================================================
 -- 说明：这个脚本会依次插入所有必要的测试数据
 -- 执行方式：新建查询，分段复制粘贴执行
+-- 备注: 已更新以匹配设计文档 v1.0.0
 
 -- ============================================================================
--- 第1部分：插入情感分类数据
--- ============================================================================
-INSERT INTO Sentiments (SentimentID, Label, Description) VALUES
-(1, '正面', '表达积极、满意、赞扬等正面情感'),
-(2, '中立', '未表达明显情感倾向的中立观点'),
-(3, '负面', '表达消极、不满、批评等负面情感');
-
--- ============================================================================
--- 第2部分：插入预定义话题标签
+-- 第1部分：插入预定义话题标签
 -- ============================================================================
 INSERT INTO Hashtags (HashtagName) VALUES
 ('科技'),
@@ -28,7 +21,7 @@ INSERT INTO Hashtags (HashtagName) VALUES
 ('文化');
 
 -- ============================================================================
--- 第3部分：插入敏感关键词
+-- 第2部分：插入敏感关键词
 -- ============================================================================
 INSERT INTO Keywords (Keyword, Category) VALUES
 ('垃圾', '不当言论'),
@@ -40,14 +33,15 @@ INSERT INTO Keywords (Keyword, Category) VALUES
 ('冒充', '有害内容');
 
 -- ============================================================================
--- 第4部分：插入用户数据
+-- 第3部分：插入用户数据
 -- ============================================================================
-INSERT INTO Users (Username, Email, PasswordHash, Status) VALUES
-('用户A', 'user_a@example.com', 'hash_a', 'active'),
-('用户B', 'user_b@example.com', 'hash_b', 'active'),
-('用户C', 'user_c@example.com', 'hash_c', 'active'),
-('用户D', 'user_d@example.com', 'hash_d', 'active'),
-('用户E', 'user_e@example.com', 'hash_e', 'active'),
+INSERT INTO Users (Username, Email, PasswordHash, Role, Status) VALUES
+('admin', 'admin@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'ADMIN', 'ACTIVE'),
+('用户A', 'user_a@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'USER', 'ACTIVE'),
+('用户B', 'user_b@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'USER', 'ACTIVE'),
+('用户C', 'user_c@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'USER', 'ACTIVE'),
+('用户D', 'user_d@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'USER', 'ACTIVE'),
+('用户E', 'user_e@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'USER', 'ACTIVE'),
 ('用户F', 'user_f@example.com', 'hash_f', 'active'),
 ('用户G', 'user_g@example.com', 'hash_g', 'inactive'),
 ('用户H', 'user_h@example.com', 'hash_h', 'active');
