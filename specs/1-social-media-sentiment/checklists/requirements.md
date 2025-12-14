@@ -29,6 +29,14 @@
 - [x] Feature meets measurable outcomes defined in Success Criteria
 - [x] No implementation details leak into specification
 
+## Clarifications Completed
+
+- [x] Q1: 情感分析的大模型服务集成方式 → 通过触发器异步调用存储过程
+- [x] Q2: 敏感关键词的匹配规则 → 精确匹配，不区分大小写
+- [x] Q3: 管理员权限的细分 → 两个角色：普通用户 + 系统管理员
+- [x] Q4: JWT 访问令牌的有效期 → 24小时
+- [x] Q5: 话题提取的实时性要求 → 发布时同步提取，存储到话题表
+
 ## Notes
 
 - 所有必需章节已完成，包括用户场景、功能需求、成功标准、关键实体等
@@ -37,6 +45,9 @@
 - 10项成功标准，全部为可衡量的指标
 - 8个关键实体明确定义了数据模型
 - 假设和依赖关系清晰说明
-- 无需要澄清的问题，规格说明完整且可实施
+- 所有澄清问题已解决，规格说明完整且可实施
+- 明确了数据库层实现方式（触发器+存储过程），符合课程设计要求
 
-**Status**: ✅ 规格说明已准备就绪，可进入下一阶段：/speckit.clarify 或 /speckit.plan
+**Status**: ✅ 规格说明已完成澄清，准备就绪，可进入下一阶段：/speckit.plan
+
+**Updated**: 2025-12-15 - Clarifications session completed (5 questions answered)
