@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch:*)",
+      "Bash(.specify/scripts/powershell/create-new-feature.ps1 -Json \"开发一个社交媒体舆情分析系统，面向数据库课程设计场景，重点展示关系数据库建模和手写 SQL 能力。\n\n**用户管理功能：**\n- 用户可以通过用户名、邮箱和密码进行注册，用户名和邮箱必须唯一\n- 用户可以使用用户名或邮箱配合密码进行登录，登录成功后获得访问令牌\n- 管理员可以查看所有用户列表，支持分页\n- 管理员可以禁用或启用用户账号，被禁用的用户无法登录和发布内容\n- 管理员可以删除用户，删除时该用户的所有帖子和评论也应被删除\n\n**内容管理功能：**\n- 已登录且未被禁用的用户可以发布帖子，帖子包含文本内容\n- 帖子内容中可以包含话题标签，格式为 #话题名称#，系统需自动识别并提取\n- 用户可以查看帖子列表，支持按时间排序和分页\n- 用户可以查看单个帖子的详情，包括帖子内容、发布者、发布时间、情感分析结果\n- 用户可以对帖子发表评论\n- 用户可以删除自己发布的帖子，删除时该帖子的所有评论也应被删除\n- 用户可以删除自己发表的评论\n\n**话题管理功能：**\n- 系统自动从帖子内容中提取 #话题# 格式的标签\n- 可以查看所有话题列表\n- 可以查看某个话题下的所有帖子\n\n**情感分析功能：**\n- 每条帖子发布后，系统自动调用大模型进行情感分析\n- 情感分析结果包括：情感类别（正面/中立/负面）和置信度评分（0-1）\n- 情感分析结果需持久化存储，供后续统计查询使用\n- 如果情感分析失败，帖子仍应成功发布，情感结果标记为\"未分析\"\n\n**热点分析功能：**\n- 可以查询指定时间范围内的热点话题排行榜\n- 热度计算规则：热度 = 帖子数 × 0.7 + 评论数 × 0.3\n- 排行榜返回前 N 个话题（N 可配置，默认 10）\n- 每个话题显示：话题名称、帖子数、评论数、热度值\n\n**舆情趋势分析功能：**\n- 可以查询指定时间范围内的每日舆情趋势\n- 返回每一天的正面、中立、负面帖子数量\n- 数据用于前端绘制趋势折线图\n\n**情感分布分析功能：**\n- 可以查询指定时间范围内的情感分布统计\n- 返回正面、中立、负面帖子的数量和占比\n- 数据用于前端绘制饼图\n\n**关键词预警功能：**\n- 管理员可以配置敏感关键词，包括关键词内容和所属类别\n- 管理员可以查看、编辑、删除已配置的关键词\n- 可以查询最近 24 小时内命中敏感关键词的帖子和评论\n- 预警结果显示：内容类型、内容摘要、命中的关键词、发布时间、发布者\n\n**系统角色：**\n- 普通用户：可以注册、登录、发帖、评论、查看分析结果\n- 管理员：除普通用户功能外，还可以管理用户、配置关键词\n- 系统预置一个管理员账号用于初始化\n\n**数据展示要求：**\n- 所有列表查询支持分页\n- 热点排行、舆情趋势、情感分布需要可视化图表展示\n- 预警信息需要列表形式展示，支持按时间排序\" -Json -Number 1 -ShortName \"social-media-sentiment\")",
+      "Bash(git checkout:*)",
+      "Bash(mkdir:*)",
+      "Bash(git add specs/1-social-media-sentiment/)",
+      "Bash(git commit -m \"feat(spec): create social media sentiment analysis system specification v1.0.0\n\n- Define 11 user stories covering user management, content posting, \n  topic extraction, sentiment analysis, and analytics features\n- Add 18 functional requirements for core system capabilities\n- Specify 8 key entities: User, Post, Comment, Hashtag, etc.\n- Define 10 measurable success criteria (performance, scalability)\n- Include acceptance scenarios for each user story\n- Document edge cases and system assumptions\n\nCloses #1\")",
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(.specify/scripts/powershell/setup-plan.ps1 -Json)",
+      "WebSearch",
+      "WebFetch(domain:support.huaweicloud.com)",
+      "mcp__context7__resolve-library-id",
+      "Bash(powershell -Command:*)",
+      "mcp__fetch__fetch",
+      "WebFetch(domain:echarts.apache.org)",
+      "Bash(cmd /c:*)",
+      "mcp__context7__get-library-docs",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
