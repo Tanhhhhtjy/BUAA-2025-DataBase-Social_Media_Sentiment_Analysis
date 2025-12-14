@@ -184,7 +184,7 @@ SELECT
     COUNT(DISTINCT p.PostID) AS 帖子数,
     COUNT(DISTINCT c.CommentID) AS 评论数,
     COUNT(DISTINCT p.PostID) + COUNT(DISTINCT c.CommentID) AS 活跃度,
-    MAX(GREATEST(MAX(p.CreatedAt), MAX(c.CreatedAt))) AS 最后活动时间
+    MAX(p.CreatedAt) AS 最后活动时间
 FROM Users u
 LEFT JOIN Posts p ON u.UserID = p.UserID
 LEFT JOIN Comments c ON u.UserID = c.UserID
@@ -223,18 +223,13 @@ ORDER BY 帖子数 DESC;
 SELECT
     k.Keyword AS 敏感关键词,
     k.Category AS 分类,
-    SUM(
-        (SELECT COUNT(*) FROM Posts p
-         WHERE p.Content LIKE CONCAT('%', k.Keyword, '%')
-         AND p.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR))
-    ) AS 24小时帖子数,
-    SUM(
-        (SELECT COUNT(*) FROM Comments c
-         WHERE c.Content LIKE CONCAT('%', k.Keyword, '%')
-         AND c.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR))
-    ) AS 24小时评论数
+    (SELECT COUNT(*) FROM Posts p
+     WHERE p.Content LIKE CONCAT('%', k.Keyword, '%')
+     AND p.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS 24小时帖子数,
+    (SELECT COUNT(*) FROM Comments c
+     WHERE c.Content LIKE CONCAT('%', k.Keyword, '%')
+     AND c.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS 24小时评论数
 FROM Keywords k
-GROUP BY k.KeywordID, k.Keyword, k.Category
 ORDER BY (
     (SELECT COUNT(*) FROM Posts p WHERE p.Content LIKE CONCAT('%', k.Keyword, '%'))
     +
