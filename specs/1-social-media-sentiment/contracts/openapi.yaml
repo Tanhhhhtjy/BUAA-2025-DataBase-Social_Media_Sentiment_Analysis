@@ -1,0 +1,1178 @@
+openapi: 3.0.3
+info:
+  title: 社交媒体舆情分析系统 API
+  description: |
+    社交媒体舆情分析系统的 RESTful API 文档
+
+    ## 功能模块
+    - 用户认证与授权
+    - 帖子管理
+    - 评论管理
+    - 话题管理
+    - 情感分析
+    - 舆情分析
+    - 关键词预警
+
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080/api
+    description: 开发环境
+  - url: https://api.example.com/api
+    description: 生产环境
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Authentication Endpoints
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: 用户注册
+      description: 新用户注册账号
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+            example:
+              username: "john_doe"
+              email: "john@example.com"
+              password: "password123"
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      userId:
+                        type: integer
+                      username:
+                        type: string
+                      email:
+                        type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: 用户名或邮箱已存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 409
+                message: "用户名已存在"
+                data: null
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: 用户登录
+      description: 使用用户名或邮箱登录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+            example:
+              usernameOrEmail: "john_doe"
+              password: "password123"
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        description: JWT 访问令牌
+                      expiresIn:
+                        type: integer
+                        description: 过期时间（秒）
+        '401':
+          description: 认证失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 401
+                message: "用户名或密码错误"
+                data: null
+
+  # User Management Endpoints
+  /users/profile:
+    get:
+      tags:
+        - User Management
+      summary: 获取当前用户信息
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+
+  /users/{userId}:
+    get:
+      tags:
+        - User Management
+      summary: 获取用户信息（管理员功能）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users:
+    get:
+      tags:
+        - User Management
+      summary: 获取用户列表（管理员功能）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: 页码（从1开始）
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: 每页数量
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+        - name: status
+          in: query
+          description: 筛选状态
+          schema:
+            type: string
+            enum: [ACTIVE, DISABLED]
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          users:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/UserResponse'
+                          pagination:
+                            $ref: '#/components/schemas/Pagination'
+
+  /users/{userId}/status:
+    patch:
+      tags:
+        - User Management
+      summary: 更新用户状态（管理员功能）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [ACTIVE, DISABLED]
+      responses:
+        '200':
+          description: 更新成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}:
+    delete:
+      tags:
+        - User Management
+      summary: 删除用户（管理员功能）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 删除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Post Management Endpoints
+  /posts:
+    get:
+      tags:
+        - Posts
+      summary: 获取帖子列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [created_at, updated_at]
+            default: created_at
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      posts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PostResponse'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+
+    post:
+      tags:
+        - Posts
+      summary: 创建帖子
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+            example:
+              content: "今天天气真好！#天气#心情#"
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PostResponse'
+
+  /posts/{postId}:
+    get:
+      tags:
+        - Posts
+      summary: 获取帖子详情
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PostDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Posts
+      summary: 删除帖子
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 删除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Comment Management Endpoints
+  /posts/{postId}/comments:
+    get:
+      tags:
+        - Comments
+      summary: 获取帖子评论列表
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      comments:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CommentResponse'
+
+    post:
+      tags:
+        - Comments
+      summary: 发表评论
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  maxLength: 500
+      responses:
+        '201':
+          description: 评论成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CommentResponse'
+
+  /comments/{commentId}:
+    delete:
+      tags:
+        - Comments
+      summary: 删除评论
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 删除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Hashtag Endpoints
+  /hashtags:
+    get:
+      tags:
+        - Hashtags
+      summary: 获取话题列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HashtagResponse'
+
+  /hashtags/{hashtagId}/posts:
+    get:
+      tags:
+        - Hashtags
+      summary: 获取话题下的帖子列表
+      parameters:
+        - name: hashtagId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      posts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PostResponse'
+
+  # Analytics Endpoints
+  /analytics/hot-topics:
+    get:
+      tags:
+        - Analytics
+      summary: 获取热点话题排行榜
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HotTopicResponse'
+
+  /analytics/sentiment-trend:
+    get:
+      tags:
+        - Analytics
+      summary: 获取舆情趋势分析
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SentimentTrendResponse'
+
+  /analytics/sentiment-distribution:
+    get:
+      tags:
+        - Analytics
+      summary: 获取情感分布统计
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SentimentDistributionResponse'
+
+  # Keyword Management Endpoints
+  /keywords:
+    get:
+      tags:
+        - Keywords
+      summary: 获取敏感关键词列表（管理员功能）
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KeywordResponse'
+
+    post:
+      tags:
+        - Keywords
+      summary: 添加敏感关键词（管理员功能）
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKeywordRequest'
+            example:
+              keyword: "政治敏感"
+              category: "政治"
+      responses:
+        '201':
+          description: 添加成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /keywords/{keywordId}:
+    put:
+      tags:
+        - Keywords
+      summary: 更新敏感关键词（管理员功能）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: keywordId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateKeywordRequest'
+      responses:
+        '200':
+          description: 更新成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Keywords
+      summary: 删除敏感关键词（管理员功能）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: keywordId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 删除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Alert Endpoints
+  /alerts:
+    get:
+      tags:
+        - Alerts
+      summary: 获取预警列表（管理员功能）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      alerts:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AlertResponse'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Request Schemas
+    UserRegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_]+$'
+          description: 用户名
+        email:
+          type: string
+          format: email
+          description: 邮箱
+        password:
+          type: string
+          minLength: 8
+          description: 密码
+
+    UserLoginRequest:
+      type: object
+      required:
+        - usernameOrEmail
+        - password
+      properties:
+        usernameOrEmail:
+          type: string
+          description: 用户名或邮箱
+        password:
+          type: string
+          description: 密码
+
+    CreatePostRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          maxLength: 5000
+          description: 帖子内容
+
+    CreateKeywordRequest:
+      type: object
+      required:
+        - keyword
+        - category
+      properties:
+        keyword:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: 关键词内容
+        category:
+          type: string
+          minLength: 2
+          maxLength: 50
+          description: 关键词类别
+
+    UpdateKeywordRequest:
+      type: object
+      properties:
+        keyword:
+          type: string
+          minLength: 2
+          maxLength: 100
+        category:
+          type: string
+          minLength: 2
+          maxLength: 50
+
+    # Response Schemas
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 响应码
+        message:
+          type: string
+          description: 响应消息
+        data:
+          type: object
+          description: 响应数据
+        timestamp:
+          type: string
+          format: date-time
+          description: 响应时间
+
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: 用户ID
+        username:
+          type: string
+          description: 用户名
+        email:
+          type: string
+          format: email
+          description: 邮箱
+        role:
+          type: string
+          enum: [USER, ADMIN]
+          description: 用户角色
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED]
+          description: 账户状态
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+
+    PostResponse:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: 帖子ID
+        userId:
+          type: integer
+          description: 发布者ID
+        username:
+          type: string
+          description: 发布者用户名
+        content:
+          type: string
+          description: 帖子内容
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+        sentiment:
+          type: string
+          enum: [POSITIVE, NEUTRAL, NEGATIVE, UNANALYZED]
+          description: 情感类别
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: 置信度
+        hashtags:
+          type: array
+          items:
+            type: string
+          description: 话题标签列表
+
+    PostDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/PostResponse'
+        - type: object
+          properties:
+            updatedAt:
+              type: string
+              format: date-time
+              description: 更新时间
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/CommentResponse'
+              description: 评论列表
+
+    CommentResponse:
+      type: object
+      properties:
+        commentId:
+          type: integer
+          description: 评论ID
+        postId:
+          type: integer
+          description: 帖子ID
+        userId:
+          type: integer
+          description: 评论者ID
+        username:
+          type: string
+          description: 评论者用户名
+        content:
+          type: string
+          description: 评论内容
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+
+    HashtagResponse:
+      type: object
+      properties:
+        hashtagId:
+          type: integer
+          description: 话题ID
+        tagName:
+          type: string
+          description: 话题名称
+        postCount:
+          type: integer
+          description: 关联帖子数量
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+
+    HotTopicResponse:
+      type: object
+      properties:
+        tagName:
+          type: string
+          description: 话题名称
+        postCount:
+          type: integer
+          description: 帖子数量
+        commentCount:
+          type: integer
+          description: 评论数量
+        heatScore:
+          type: number
+          format: float
+          description: 热度值（帖子数×0.7 + 评论数×0.3）
+
+    SentimentTrendResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: 日期
+        positiveCount:
+          type: integer
+          description: 正面帖子数
+        neutralCount:
+          type: integer
+          description: 中立帖子数
+        negativeCount:
+          type: integer
+          description: 负面帖子数
+
+    SentimentDistributionResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: 总帖子数
+        positive:
+          type: object
+          properties:
+            count:
+              type: integer
+            percentage:
+              type: number
+              format: float
+        neutral:
+          type: object
+          properties:
+            count:
+              type: integer
+            percentage:
+              type: number
+              format: float
+        negative:
+          type: object
+          properties:
+            count:
+              type: integer
+            percentage:
+              type: number
+              format: float
+
+    KeywordResponse:
+      type: object
+      properties:
+        keywordId:
+          type: integer
+          description: 关键词ID
+        keyword:
+          type: string
+          description: 关键词内容
+        category:
+          type: string
+          description: 关键词类别
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新时间
+
+    AlertResponse:
+      type: object
+      properties:
+        alertId:
+          type: integer
+          description: 预警ID
+        contentType:
+          type: string
+          enum: [POST, COMMENT]
+          description: 内容类型
+        contentId:
+          type: integer
+          description: 内容ID
+        keyword:
+          type: string
+          description: 命中的关键词
+        category:
+          type: string
+          description: 关键词类别
+        summary:
+          type: string
+          description: 内容摘要
+        createdAt:
+          type: string
+          format: date-time
+          description: 创建时间
+
+    Pagination:
+      type: object
+      properties:
+        currentPage:
+          type: integer
+          description: 当前页码
+        pageSize:
+          type: integer
+          description: 每页数量
+        total:
+          type: integer
+          description: 总记录数
+        totalPages:
+          type: integer
+          description: 总页数
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            code: 400
+            message: "请求参数错误"
+            data: null
+
+    NotFound:
+      description: 资源未找到
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            code: 404
+            message: "资源未找到"
+            data: null
+
+    Unauthorized:
+      description: 未授权访问
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            code: 401
+            message: "未授权访问"
+            data: null
+
+    Forbidden:
+      description: 禁止访问
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            code: 403
+            message: "禁止访问"
+            data: null
+
+    InternalServerError:
+      description: 内部服务器错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            code: 500
+            message: "内部服务器错误"
+            data: null
