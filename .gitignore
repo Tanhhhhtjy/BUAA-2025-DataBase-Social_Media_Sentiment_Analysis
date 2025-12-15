@@ -42,3 +42,9 @@ env/
 # Compiled files
 *.class
 *.jar
+
+# Backend build outputs
+backend/target/
+
+# Frontend build outputs
+frontend/dist/
