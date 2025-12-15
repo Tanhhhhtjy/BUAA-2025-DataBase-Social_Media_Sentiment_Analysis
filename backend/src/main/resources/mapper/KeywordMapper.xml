@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.socialmedia.sentiment.mapper.KeywordMapper">
+
+    <resultMap id="KeywordResultMap" type="com.socialmedia.sentiment.entity.Keyword">
+        <id property="keywordId" column="keyword_id"/>
+        <result property="keyword" column="keyword"/>
+        <result property="category" column="category"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findById" resultMap="KeywordResultMap">
+        SELECT keyword_id, keyword, category, created_at, updated_at
+        FROM keywords
+        WHERE keyword_id = #{keywordId}
+    </select>
+
+    <select id="findByKeyword" resultMap="KeywordResultMap">
+        SELECT keyword_id, keyword, category, created_at, updated_at
+        FROM keywords
+        WHERE LOWER(keyword) = LOWER(#{keyword})
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="keywordId">
+        INSERT INTO keywords (keyword, category, created_at, updated_at)
+        VALUES (#{keyword}, #{category}, NOW(), NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE keywords
+        SET keyword = #{keyword},
+            category = #{category},
+            updated_at = NOW()
+        WHERE keyword_id = #{keywordId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM keywords WHERE keyword_id = #{keywordId}
+    </delete>
+
+    <select id="findAll" resultMap="KeywordResultMap">
+        SELECT keyword_id, keyword, category, created_at, updated_at
+        FROM keywords
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findByCategory" resultMap="KeywordResultMap">
+        SELECT keyword_id, keyword, category, created_at, updated_at
+        FROM keywords
+        WHERE category = #{category}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM keywords
+    </select>
+
+    <select id="existsByKeyword" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM keywords WHERE LOWER(keyword) = LOWER(#{keyword})
+    </select>
+
+</mapper>

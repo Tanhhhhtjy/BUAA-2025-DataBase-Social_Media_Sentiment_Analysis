@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.socialmedia.sentiment.mapper.PostMapper">
+
+    <resultMap id="PostResultMap" type="com.socialmedia.sentiment.entity.Post">
+        <id property="postId" column="post_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findById" resultMap="PostResultMap">
+        SELECT post_id, user_id, content, created_at, updated_at
+        FROM posts
+        WHERE post_id = #{postId}
+    </select>
+
+    <insert id="insert" parameterType="com.socialmedia.sentiment.entity.Post" useGeneratedKeys="true" keyProperty="postId">
+        INSERT INTO posts (user_id, content, created_at, updated_at)
+        VALUES (#{userId}, #{content}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.socialmedia.sentiment.entity.Post">
+        UPDATE posts
+        SET content = #{content}, updated_at = NOW()
+        WHERE post_id = #{postId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM posts WHERE post_id = #{postId}
+    </delete>
+
+    <select id="findAll" resultMap="PostResultMap">
+        SELECT post_id, user_id, content, created_at, updated_at
+        FROM posts
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findByUserId" resultMap="PostResultMap">
+        SELECT post_id, user_id, content, created_at, updated_at
+        FROM posts
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findByHashtagId" resultMap="PostResultMap">
+        SELECT p.post_id, p.user_id, p.content, p.created_at, p.updated_at
+        FROM posts p
+        INNER JOIN post_hashtags ph ON p.post_id = ph.post_id
+        WHERE ph.hashtag_id = #{hashtagId}
+        ORDER BY p.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findByDateRange" resultMap="PostResultMap">
+        SELECT post_id, user_id, content, created_at, updated_at
+        FROM posts
+        WHERE created_at BETWEEN #{startDate} AND #{endDate}
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM posts
+    </select>
+
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*) FROM posts WHERE user_id = #{userId}
+    </select>
+
+    <select id="countByHashtagId" resultType="long">
+        SELECT COUNT(*)
+        FROM posts p
+        INNER JOIN post_hashtags ph ON p.post_id = ph.post_id
+        WHERE ph.hashtag_id = #{hashtagId}
+    </select>
+
+    <select id="countByDateRange" resultType="long">
+        SELECT COUNT(*)
+        FROM posts
+        WHERE created_at BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+</mapper>

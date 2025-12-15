@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.socialmedia.sentiment.mapper.AlertMapper">
+
+    <resultMap id="AlertResultMap" type="com.socialmedia.sentiment.entity.Alert">
+        <id property="alertId" column="alert_id"/>
+        <result property="contentType" column="content_type"/>
+        <result property="contentId" column="content_id"/>
+        <result property="keywordId" column="keyword_id"/>
+        <result property="summary" column="summary"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="keyword" column="keyword"/>
+        <result property="username" column="username"/>
+        <result property="userId" column="user_id"/>
+    </resultMap>
+
+    <select id="findById" resultMap="AlertResultMap">
+        SELECT a.alert_id, a.content_type, a.content_id, a.keyword_id, a.summary, a.created_at,
+               k.keyword, u.username, u.user_id
+        FROM alerts a
+        LEFT JOIN keywords k ON a.keyword_id = k.keyword_id
+        LEFT JOIN (
+            SELECT p.post_id as id, p.user_id, 'POST' as type FROM posts p
+            UNION ALL
+            SELECT c.comment_id as id, c.user_id, 'COMMENT' as type FROM comments c
+        ) content ON a.content_id = content.id AND a.content_type = content.type
+        LEFT JOIN users u ON content.user_id = u.user_id
+        WHERE a.alert_id = #{alertId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="alertId">
+        INSERT INTO alerts (content_type, content_id, keyword_id, summary, created_at)
+        VALUES (#{contentType}, #{contentId}, #{keywordId}, #{summary}, NOW())
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE alerts SET summary = CONCAT(summary, ' [已处理]')
+        WHERE alert_id = #{alertId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM alerts WHERE alert_id = #{alertId}
+    </delete>
+
+    <select id="findAll" resultMap="AlertResultMap">
+        SELECT a.alert_id, a.content_type, a.content_id, a.keyword_id, a.summary, a.created_at,
+               k.keyword,
+               CASE
+                   WHEN a.content_type = 'POST' THEN (SELECT u.username FROM posts p JOIN users u ON p.user_id = u.user_id WHERE p.post_id = a.content_id)
+                   WHEN a.content_type = 'COMMENT' THEN (SELECT u.username FROM comments c JOIN users u ON c.user_id = u.user_id WHERE c.comment_id = a.content_id)
+               END as username,
+               CASE
+                   WHEN a.content_type = 'POST' THEN (SELECT p.user_id FROM posts p WHERE p.post_id = a.content_id)
+                   WHEN a.content_type = 'COMMENT' THEN (SELECT c.user_id FROM comments c WHERE c.comment_id = a.content_id)
+               END as user_id
+        FROM alerts a
+        LEFT JOIN keywords k ON a.keyword_id = k.keyword_id
+        ORDER BY a.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findRecent" resultMap="AlertResultMap">
+        SELECT a.alert_id, a.content_type, a.content_id, a.keyword_id, a.summary, a.created_at,
+               k.keyword,
+               CASE
+                   WHEN a.content_type = 'POST' THEN (SELECT u.username FROM posts p JOIN users u ON p.user_id = u.user_id WHERE p.post_id = a.content_id)
+                   WHEN a.content_type = 'COMMENT' THEN (SELECT u.username FROM comments c JOIN users u ON c.user_id = u.user_id WHERE c.comment_id = a.content_id)
+               END as username,
+               CASE
+                   WHEN a.content_type = 'POST' THEN (SELECT p.user_id FROM posts p WHERE p.post_id = a.content_id)
+                   WHEN a.content_type = 'COMMENT' THEN (SELECT c.user_id FROM comments c WHERE c.comment_id = a.content_id)
+               END as user_id
+        FROM alerts a
+        LEFT JOIN keywords k ON a.keyword_id = k.keyword_id
+        WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL #{hours} HOUR)
+        ORDER BY a.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findByDateRange" resultMap="AlertResultMap">
+        SELECT a.alert_id, a.content_type, a.content_id, a.keyword_id, a.summary, a.created_at,
+               k.keyword,
+               CASE
+                   WHEN a.content_type = 'POST' THEN (SELECT u.username FROM posts p JOIN users u ON p.user_id = u.user_id WHERE p.post_id = a.content_id)
+                   WHEN a.content_type = 'COMMENT' THEN (SELECT u.username FROM comments c JOIN users u ON c.user_id = u.user_id WHERE c.comment_id = a.content_id)
+               END as username,
+               CASE
+                   WHEN a.content_type = 'POST' THEN (SELECT p.user_id FROM posts p WHERE p.post_id = a.content_id)
+                   WHEN a.content_type = 'COMMENT' THEN (SELECT c.user_id FROM comments c WHERE c.comment_id = a.content_id)
+               END as user_id
+        FROM alerts a
+        LEFT JOIN keywords k ON a.keyword_id = k.keyword_id
+        WHERE a.created_at BETWEEN #{startDate} AND #{endDate}
+        ORDER BY a.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM alerts
+    </select>
+
+    <select id="countRecent" resultType="long">
+        SELECT COUNT(*) FROM alerts
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL #{hours} HOUR)
+    </select>
+
+</mapper>

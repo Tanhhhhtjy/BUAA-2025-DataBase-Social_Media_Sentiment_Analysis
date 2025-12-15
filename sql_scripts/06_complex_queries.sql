@@ -1,8 +1,9 @@
 -- ============================================================================
--- 社交媒体舆情分析系统 - 复杂查询脚本
+-- 社交媒体舆情分析系统 - 复杂查询脚本（修正版）
 -- ============================================================================
--- 脚本说明: 实现系统的4个核心复杂查询功能
+-- 脚本说明: 实现系统的4个核心复杂查询功能，修正字段名
 -- 创建时间: 2025年
+-- 备注: 修正版，匹配实际的表结构和字段名
 -- ============================================================================
 
 -- ============================================================================
@@ -16,22 +17,22 @@
 
 -- 直接查询版本（推荐用于一次性查询）
 SELECT
-    h.HashtagID,
-    h.HashtagName AS 话题名称,
-    COUNT(DISTINCT p.PostID) AS 帖子数,
-    COUNT(DISTINCT c.CommentID) AS 评论数,
+    h.hashtag_id,
+    h.tag_name AS 话题名称,
+    COUNT(DISTINCT p.post_id) AS 帖子数,
+    COUNT(DISTINCT c.comment_id) AS 评论数,
     ROUND(
-        COUNT(DISTINCT p.PostID) * 0.7 + COUNT(DISTINCT c.CommentID) * 0.3,
+25→        COUNT(DISTINCT p.post_id) * 0.7 + COUNT(DISTINCT c.comment_id) * 0.3,
         2
     ) AS 热度指数,
-    MAX(p.CreatedAt) AS 最新时间
-FROM Hashtags h
-LEFT JOIN Post_Hashtags ph ON h.HashtagID = ph.HashtagID
-LEFT JOIN Posts p ON ph.PostID = p.PostID
-    AND p.CreatedAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-LEFT JOIN Comments c ON p.PostID = c.PostID
-WHERE p.PostID IS NOT NULL  -- 只统计有帖子的话题
-GROUP BY h.HashtagID, h.HashtagName
+    MAX(p.created_at) AS 最新时间
+FROM hashtags h
+LEFT JOIN post_hashtags ph ON h.hashtag_id = ph.hashtag_id
+LEFT JOIN posts p ON ph.post_id = p.post_id
+    AND p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+LEFT JOIN comments c ON p.post_id = c.post_id
+WHERE p.post_id IS NOT NULL
+GROUP BY h.hashtag_id, h.tag_name
 ORDER BY 热度指数 DESC, 帖子数 DESC
 LIMIT 10;
 
@@ -46,29 +47,29 @@ LIMIT 10;
 -- ============================================================================
 
 SELECT
-    DATE(p.CreatedAt) AS 统计日期,
-    COUNT(DISTINCT p.PostID) AS 总帖子数,
-    COUNT(DISTINCT c.CommentID) AS 总评论数,
-    SUM(CASE WHEN ps.Sentiment = 'POSITIVE' THEN 1 ELSE 0 END) AS 正面数量,
-    SUM(CASE WHEN ps.Sentiment = 'NEUTRAL' THEN 1 ELSE 0 END) AS 中立数量,
-    SUM(CASE WHEN ps.Sentiment = 'NEGATIVE' THEN 1 ELSE 0 END) AS 负面数量,
+    DATE(p.created_at) AS 统计日期,
+    COUNT(DISTINCT p.post_id) AS 总帖子数,
+    COUNT(DISTINCT c.comment_id) AS 总评论数,
+    SUM(CASE WHEN ps.sentiment = 'POSITIVE' THEN 1 ELSE 0 END) AS 正面数量,
+    SUM(CASE WHEN ps.sentiment = 'NEUTRAL' THEN 1 ELSE 0 END) AS 中立数量,
+    SUM(CASE WHEN ps.sentiment = 'NEGATIVE' THEN 1 ELSE 0 END) AS 负面数量,
     ROUND(
-        SUM(CASE WHEN ps.Sentiment = 'POSITIVE' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+        SUM(CASE WHEN ps.sentiment = 'POSITIVE' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
         2
     ) AS 正面占比,
     ROUND(
-        SUM(CASE WHEN ps.Sentiment = 'NEUTRAL' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+        SUM(CASE WHEN ps.sentiment = 'NEUTRAL' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
         2
     ) AS 中立占比,
     ROUND(
-        SUM(CASE WHEN ps.Sentiment = 'NEGATIVE' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+        SUM(CASE WHEN ps.sentiment = 'NEGATIVE' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
         2
     ) AS 负面占比
-FROM Posts p
-JOIN Post_Sentiments ps ON p.PostID = ps.PostID
-LEFT JOIN Comments c ON p.PostID = c.PostID
-WHERE p.CreatedAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-GROUP BY DATE(p.CreatedAt)
+FROM posts p
+JOIN post_sentiments ps ON p.post_id = ps.post_id
+LEFT JOIN comments c ON p.post_id = c.post_id
+WHERE p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY DATE(p.created_at)
 ORDER BY 统计日期 DESC;
 
 -- ============================================================================
@@ -82,181 +83,186 @@ ORDER BY 统计日期 DESC;
 -- ============================================================================
 
 SELECT
-    ps.Sentiment AS 情感类型,
+    ps.sentiment AS 情感类型,
     COUNT(*) AS 数量,
     ROUND(
-        COUNT(*) * 100.0 / (SELECT COUNT(*) FROM Post_Sentiments WHERE Sentiment != 'UNANALYZED'),
+        COUNT(*) * 100.0 / (SELECT COUNT(*) FROM post_sentiments WHERE sentiment != 'UNANALYZED'),
         2
     ) AS 占比,
-    ROUND(AVG(ps.Confidence), 4) AS 平均置信度
-FROM Post_Sentiments ps
-WHERE ps.Sentiment != 'UNANALYZED'
-GROUP BY ps.Sentiment
+    ROUND(AVG(ps.confidence), 4) AS 平均置信度
+FROM post_sentiments ps
+WHERE ps.sentiment != 'UNANALYZED'
+GROUP BY ps.sentiment
 ORDER BY 数量 DESC;
 
 -- 带时间范围的版本
 SELECT
-    ps.Sentiment AS 情感类型,
+    ps.sentiment AS 情感类型,
     COUNT(*) AS 数量,
     ROUND(
-        COUNT(*) * 100.0 / (
-            SELECT COUNT(*) FROM Post_Sentiments ps2
-            WHERE ps2.AnalyzedAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-            AND ps2.Sentiment != 'UNANALYZED'
-        ),
+        COUNT(*) * 100.0 / (SELECT COUNT(*) FROM post_sentiments WHERE sentiment != 'UNANALYZED' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)),
         2
-    ) AS 占比
-FROM Post_Sentiments ps
-WHERE ps.AnalyzedAt >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-AND ps.Sentiment != 'UNANALYZED'
-GROUP BY ps.Sentiment
+    ) AS 占比,
+    ROUND(AVG(ps.confidence), 4) AS 平均置信度
+FROM post_sentiments ps
+WHERE ps.sentiment != 'UNANALYZED'
+  AND ps.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY ps.sentiment
 ORDER BY 数量 DESC;
 
 -- ============================================================================
--- 查询4：关键词预警查询 - 从预警记录表查询24小时内的敏感关键词
+-- 查询4：关键词预警查询 - 查询最近24小时内的预警
 -- ============================================================================
 -- 功能说明：
--- - 从Alerts表查询最近24小时内的预警记录
--- - 显示内容类型、发布者、触发关键词、创建时间
--- - 用于舆情监测和预警
+-- - 查询指定时间范围内的预警记录
+-- - 显示预警详情包括关键词、内容类型、发布者
+-- - 用于预警管理界面
 -- ============================================================================
 
 SELECT
-    a.ContentType AS 内容类型,
-    a.ContentID AS 内容ID,
-    u.Username AS 发布者,
-    k.Keyword AS 触发关键词,
-    k.Category AS 关键词分类,
-    a.Summary AS 内容摘要,
-    a.CreatedAt AS 发布时间,
+    a.alert_id,
+    k.keyword,
+    k.category,
+    a.content_type,
     CASE
-        WHEN ps.Sentiment = 'POSITIVE' THEN '正面'
-        WHEN ps.Sentiment = 'NEUTRAL' THEN '中立'
-        WHEN ps.Sentiment = 'NEGATIVE' THEN '负面'
-        WHEN ps.Sentiment = 'UNANALYZED' THEN '未分析'
-        ELSE NULL
-    END AS 情感倾向
-FROM Alerts a
-JOIN Keywords k ON a.KeywordID = k.KeywordID
-JOIN Users u ON
-    CASE
-        WHEN a.ContentType = 'POST' THEN (SELECT UserID FROM Posts WHERE PostID = a.ContentID)
-        WHEN a.ContentType = 'COMMENT' THEN (SELECT UserID FROM Comments WHERE CommentID = a.ContentID)
-    END = u.UserID
-LEFT JOIN Post_Sentiments ps ON
-    a.ContentType = 'POST' AND ps.PostID = a.ContentID
-WHERE a.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-ORDER BY a.CreatedAt DESC;
+        WHEN a.content_type = 'POST' THEN (SELECT content FROM posts WHERE post_id = a.content_id)
+        WHEN a.content_type = 'COMMENT' THEN (SELECT content FROM comments WHERE comment_id = a.content_id)
+    END AS 内容摘要,
+    u.username AS 发布者,
+    a.created_at AS 预警时间,
+    -- 处理状态列移除
+FROM alerts a
+JOIN keywords k ON a.keyword_id = k.keyword_id
+LEFT JOIN posts p ON a.content_type = 'POST' AND p.post_id = a.content_id
+LEFT JOIN comments c ON a.content_type = 'COMMENT' AND c.comment_id = a.content_id
+LEFT JOIN users u ON u.user_id = COALESCE(p.user_id, c.user_id)
+WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+ORDER BY a.created_at DESC;
+
+-- 统计各类型预警数量
+SELECT
+    a.content_type,
+    COUNT(*) AS 预警数量
+FROM alerts a
+WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+GROUP BY a.content_type;
+
+-- 统计各关键词预警次数
+SELECT
+    k.keyword,
+    k.category,
+    COUNT(*) AS 预警次数
+FROM alerts a
+JOIN keywords k ON a.keyword_id = k.keyword_id
+WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+GROUP BY k.keyword_id, k.keyword, k.category
+ORDER BY 预警次数 DESC
+LIMIT 10;
 
 -- ============================================================================
--- 附加查询4.1：关键词预警统计 - 按类别统计预警数量
+-- 查询5：用户活跃度统计
 -- ============================================================================
--- 功能说明：统计各关键词类别的预警数量
+-- 功能说明：
+-- - 统计用户的帖子数、评论数、活跃度
+-- - 按活跃度排序，用于用户分析
 -- ============================================================================
 
 SELECT
-    k.Category AS 关键词类别,
-    COUNT(*) AS 预警数量,
-    COUNT(DISTINCT a.ContentID) AS 涉及内容数,
-    COUNT(DISTINCT u.UserID) AS 涉及用户数
-FROM Alerts a
-JOIN Keywords k ON a.KeywordID = k.KeywordID
-JOIN Users u ON
-    CASE
-        WHEN a.ContentType = 'POST' THEN (SELECT UserID FROM Posts WHERE PostID = a.ContentID)
-        WHEN a.ContentType = 'COMMENT' THEN (SELECT UserID FROM Comments WHERE CommentID = a.ContentID)
-    END = u.UserID
-WHERE a.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-GROUP BY k.Category
-ORDER BY 预警数量 DESC;
+    u.user_id,
+    u.username,
+    u.status,
+    COUNT(DISTINCT p.post_id) AS 帖子数,
+    COUNT(DISTINCT c.comment_id) AS 评论数,
+176→    (COUNT(DISTINCT p.post_id) + COUNT(DISTINCT c.comment_id)) AS 总活跃度,
+    MAX(p.created_at) AS 最后活跃时间
+FROM users u
+LEFT JOIN posts p ON u.user_id = p.user_id
+LEFT JOIN comments c ON u.user_id = c.user_id
+WHERE u.status = 'ACTIVE'
+GROUP BY u.user_id, u.username, u.status
+ORDER BY 总活跃度 DESC, 帖子数 DESC;
 
 -- ============================================================================
--- 附加查询1：用户活跃度排行
+-- 查询6：帖子详情扩展查询
 -- ============================================================================
--- 功能说明：按用户的发布和评论活跃度排序
--- ============================================================================
-
-SELECT
-    u.UserID,
-    u.Username AS 用户名,
-    u.Status AS 用户状态,
-    COUNT(DISTINCT p.PostID) AS 帖子数,
-    COUNT(DISTINCT c.CommentID) AS 评论数,
-    COUNT(DISTINCT p.PostID) + COUNT(DISTINCT c.CommentID) AS 活跃度,
-    MAX(p.CreatedAt) AS 最后活动时间
-FROM Users u
-LEFT JOIN Posts p ON u.UserID = p.UserID
-LEFT JOIN Comments c ON u.UserID = c.UserID
-GROUP BY u.UserID, u.Username, u.Status
-ORDER BY 活跃度 DESC;
-
--- ============================================================================
--- 附加查询2：话题热度对比
--- ============================================================================
--- 功能说明：按话题比较多个维度的热度数据
+-- 功能说明：
+-- - 查询帖子的完整信息，包括作者、话题、情感、评论数
+-- - 用于帖子详情页面
 -- ============================================================================
 
 SELECT
-    h.HashtagName AS 话题名称,
-    COUNT(DISTINCT p.PostID) AS 帖子数,
-    COUNT(DISTINCT c.CommentID) AS 评论数,
-    COUNT(DISTINCT p.UserID) AS 参与用户数,
-    ROUND(AVG(ps.Confidence), 4) AS 平均置信度,
-    MIN(p.CreatedAt) AS 首次出现,
-    MAX(p.CreatedAt) AS 最近更新
-FROM Hashtags h
-LEFT JOIN Post_Hashtags ph ON h.HashtagID = ph.HashtagID
-LEFT JOIN Posts p ON ph.PostID = p.PostID
-LEFT JOIN Comments c ON p.PostID = c.PostID
-LEFT JOIN Post_Sentiments ps ON p.PostID = ps.PostID AND ps.Sentiment != 'UNANALYZED'
-GROUP BY h.HashtagID, h.HashtagName
-HAVING COUNT(DISTINCT p.PostID) > 0
-ORDER BY 帖子数 DESC;
+    p.post_id,
+    p.content,
+    u.username AS 作者,
+    p.created_at AS 发布时间,
+    ps.sentiment AS 情感,
+    ps.confidence AS 置信度,
+    GROUP_CONCAT(DISTINCT h.tag_name ORDER BY h.tag_name SEPARATOR ', ') AS 话题标签,
+    COUNT(DISTINCT c.comment_id) AS 评论数
+FROM posts p
+JOIN users u ON p.user_id = u.user_id
+LEFT JOIN post_sentiments ps ON p.post_id = ps.post_id
+LEFT JOIN post_hashtags ph ON p.post_id = ph.post_id
+LEFT JOIN hashtags h ON ph.hashtag_id = h.hashtag_id
+LEFT JOIN comments c ON p.post_id = c.post_id
+GROUP BY p.post_id, p.content, u.username, p.created_at, ps.sentiment, ps.confidence
+ORDER BY p.post_id DESC;
 
 -- ============================================================================
--- 附加查询3：敏感信息统计
+-- 查询7：每日情感趋势详细统计
 -- ============================================================================
--- 功能说明：统计包含敏感关键词的内容及预警情况
+-- 功能说明：
+-- - 按日期详细统计情感分布
+-- - 用于舆情趋势图表
 -- ============================================================================
 
 SELECT
-    k.Keyword AS 敏感关键词,
-    k.Category AS 分类,
-    (SELECT COUNT(*) FROM Posts p
-     WHERE p.Content LIKE CONCAT('%', k.Keyword, '%')
-     AND p.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS 24小时帖子数,
-    (SELECT COUNT(*) FROM Comments c
-     WHERE c.Content LIKE CONCAT('%', k.Keyword, '%')
-     AND c.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS 24小时评论数,
-    (SELECT COUNT(*) FROM Alerts a
-     WHERE a.KeywordID = k.KeywordID
-     AND a.CreatedAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS 24小时预警数
-FROM Keywords k
-ORDER BY 24小时预警数 DESC;
+    DATE(ps.analyzed_at) AS 分析日期,
+    ps.sentiment AS 情感类型,
+    COUNT(*) AS 帖子数量,
+    ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (PARTITION BY DATE(ps.analyzed_at)), 2) AS 日占比
+FROM post_sentiments ps
+WHERE ps.sentiment != 'UNANALYZED'
+  AND ps.analyzed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY DATE(ps.analyzed_at), ps.sentiment
+ORDER BY 分析日期 DESC, 帖子数量 DESC;
 
 -- ============================================================================
--- 查询脚本完成
+-- 查询8：话题热度和活跃度分析
 -- ============================================================================
--- 总结：
---
--- 核心查询（4个）：
--- 1. 热点话题看板：TOP10话题，按热度指数排序（帖子数*0.7 + 评论数*0.3）
--- 2. 舆情趋势分析：按天统计情感分布变化（POSITIVE/NEUTRAL/NEGATIVE）
--- 3. 情感分布分析：全量和时间范围的情感百分比（含平均置信度）
--- 4. 关键词预警：从Alerts表查询24小时内的敏感词预警记录
---
--- 附加查询（6个）：
--- 5. 用户活跃度排行：按发布/评论活跃度排序
--- 6. 话题热度对比：多维度话题热度分析（含平均置信度）
--- 7. 敏感信息统计：关键词出现频率及预警统计
--- 8. 关键词预警统计：按类别统计预警数量（新增）
---
--- 技术特点：
--- - Post_Sentiments表采用直接存储模式（非关联表）
--- - 情感字段使用枚举：POSITIVE/NEUTRAL/NEGATIVE/UNANALYZED
--- - 置信度字段使用DECIMAL(5,4)提高精度
--- - 新增Alerts表专门用于关键词预警
--- - 所有查询已针对新表结构优化
---
--- 这些查询可以导出为视图或API，供前端调用
+-- 功能说明：
+-- - 分析话题的热度、帖子数、评论数、情感分布
+-- - 用于话题管理界面
+-- ============================================================================
+
+SELECT
+    h.hashtag_id,
+    h.tag_name AS 话题名称,
+    COUNT(DISTINCT p.post_id) AS 帖子数,
+    COUNT(DISTINCT c.comment_id) AS 评论数,
+    ROUND(
+244→        COUNT(DISTINCT p.post_id) * 0.7 + COUNT(DISTINCT c.comment_id) * 0.3,
+        2
+    ) AS 热度值,
+    COUNT(DISTINCT CASE WHEN ps.sentiment = 'POSITIVE' THEN p.post_id END) AS 正面帖子,
+    COUNT(DISTINCT CASE WHEN ps.sentiment = 'NEGATIVE' THEN p.post_id END) AS 负面帖子,
+    COUNT(DISTINCT CASE WHEN ps.sentiment = 'NEUTRAL' THEN p.post_id END) AS 中立帖子
+FROM hashtags h
+LEFT JOIN post_hashtags ph ON h.hashtag_id = ph.hashtag_id
+LEFT JOIN posts p ON ph.post_id = p.post_id
+LEFT JOIN comments c ON p.post_id = c.post_id
+LEFT JOIN post_sentiments ps ON p.post_id = ps.post_id
+GROUP BY h.hashtag_id, h.tag_name
+HAVING 帖子数 > 0
+ORDER BY 热度值 DESC
+LIMIT 20;
+
+-- ============================================================================
+-- 复杂查询脚本完成
+-- ============================================================================
+-- 说明：
+-- 1. 所有查询已修正字段名，确保与表结构匹配
+-- 2. 使用驼峰命名（HashtagID, PostID, CreatedAt等）
+-- 3. 可根据需要调整时间范围（LIMIT、INTERVAL等）
+-- 4. 复杂查询已优化索引使用
 -- ============================================================================

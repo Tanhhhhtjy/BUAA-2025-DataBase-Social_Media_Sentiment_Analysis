@@ -19,7 +19,16 @@
       "WebFetch(domain:echarts.apache.org)",
       "Bash(cmd /c:*)",
       "mcp__context7__get-library-docs",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "SlashCommand(/speckit.tasks)",
+      "Bash(git rev-parse:*)",
+      "Bash($null)",
+      "Bash(for:*)",
+      "Bash(do:*)",
+      "Bash(du:*)",
+      "Bash(done)",
+      "Bash(tree:*)",
+      "Bash(Get-ChildItem:*)"
     ],
     "deny": [],
     "ask": []

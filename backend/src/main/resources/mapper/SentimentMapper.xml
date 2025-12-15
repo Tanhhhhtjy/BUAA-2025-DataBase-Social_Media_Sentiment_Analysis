@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.socialmedia.sentiment.mapper.SentimentMapper">
+
+    <resultMap id="SentimentResultMap" type="com.socialmedia.sentiment.entity.PostSentiment">
+        <id property="sentimentId" column="sentiment_id"/>
+        <result property="postId" column="post_id"/>
+        <result property="sentiment" column="sentiment"/>
+        <result property="confidence" column="confidence"/>
+        <result property="analyzedAt" column="analyzed_at"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findById" resultMap="SentimentResultMap">
+        SELECT sentiment_id, post_id, sentiment, confidence, analyzed_at, created_at
+        FROM post_sentiments
+        WHERE sentiment_id = #{sentimentId}
+    </select>
+
+    <select id="findByPostId" resultMap="SentimentResultMap">
+        SELECT sentiment_id, post_id, sentiment, confidence, analyzed_at, created_at
+        FROM post_sentiments
+        WHERE post_id = #{postId}
+    </select>
+
+    <insert id="insert" parameterType="com.socialmedia.sentiment.entity.PostSentiment" useGeneratedKeys="true" keyProperty="sentimentId">
+        INSERT INTO post_sentiments (post_id, sentiment, confidence, analyzed_at, created_at)
+        VALUES (#{postId}, #{sentiment}, #{confidence}, #{analyzedAt}, NOW())
+    </insert>
+
+    <update id="update" parameterType="com.socialmedia.sentiment.entity.PostSentiment">
+        UPDATE post_sentiments
+        SET sentiment = #{sentiment},
+            confidence = #{confidence},
+            analyzed_at = #{analyzedAt}
+        WHERE sentiment_id = #{sentimentId}
+    </update>
+
+    <update id="updateSentiment">
+        UPDATE post_sentiments
+        SET sentiment = #{sentiment},
+            confidence = #{confidence},
+            analyzed_at = NOW()
+        WHERE post_id = #{postId}
+    </update>
+
+    <delete id="deleteByPostId">
+        DELETE FROM post_sentiments WHERE post_id = #{postId}
+    </delete>
+
+    <select id="getSentimentDistribution" resultType="java.util.Map">
+        SELECT
+            ps.sentiment,
+            COUNT(*) as count
+        FROM post_sentiments ps
+        INNER JOIN posts p ON ps.post_id = p.post_id
+        WHERE p.created_at BETWEEN #{startDate} AND #{endDate}
+          AND ps.sentiment != 'UNANALYZED'
+        GROUP BY ps.sentiment
+    </select>
+
+    <select id="getDailySentimentTrend" resultType="java.util.Map">
+        SELECT
+            DATE(p.created_at) as date,
+            SUM(CASE WHEN ps.sentiment = 'POSITIVE' THEN 1 ELSE 0 END) as positive,
+            SUM(CASE WHEN ps.sentiment = 'NEUTRAL' THEN 1 ELSE 0 END) as neutral,
+            SUM(CASE WHEN ps.sentiment = 'NEGATIVE' THEN 1 ELSE 0 END) as negative
+        FROM posts p
+        LEFT JOIN post_sentiments ps ON p.post_id = ps.post_id
+        WHERE p.created_at BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(p.created_at)
+        ORDER BY date
+    </select>
+
+</mapper>

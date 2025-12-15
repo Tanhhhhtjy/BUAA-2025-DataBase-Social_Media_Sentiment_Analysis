@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.socialmedia.sentiment.mapper.HashtagMapper">
+
+    <resultMap id="HashtagResultMap" type="com.socialmedia.sentiment.entity.Hashtag">
+        <id property="hashtagId" column="hashtag_id"/>
+        <result property="tagName" column="tag_name"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findById" resultMap="HashtagResultMap">
+        SELECT hashtag_id, tag_name, created_at
+        FROM hashtags
+        WHERE hashtag_id = #{hashtagId}
+    </select>
+
+    <select id="findByTagName" resultMap="HashtagResultMap">
+        SELECT hashtag_id, tag_name, created_at
+        FROM hashtags
+        WHERE tag_name = #{tagName}
+    </select>
+
+    <insert id="insert" parameterType="com.socialmedia.sentiment.entity.Hashtag" useGeneratedKeys="true" keyProperty="hashtagId">
+        INSERT INTO hashtags (tag_name, created_at)
+        VALUES (#{tagName}, NOW())
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM hashtags WHERE hashtag_id = #{hashtagId}
+    </delete>
+
+    <select id="findAll" resultMap="HashtagResultMap">
+        SELECT hashtag_id, tag_name, created_at
+        FROM hashtags
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findByPostId" resultMap="HashtagResultMap">
+        SELECT h.hashtag_id, h.tag_name, h.created_at
+        FROM hashtags h
+        INNER JOIN post_hashtags ph ON h.hashtag_id = ph.hashtag_id
+        WHERE ph.post_id = #{postId}
+        ORDER BY h.tag_name
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM hashtags
+    </select>
+
+    <select id="existsByTagName" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM hashtags WHERE tag_name = #{tagName})
+    </select>
+
+    <insert id="insertPostHashtag">
+        INSERT INTO post_hashtags (post_id, hashtag_id, created_at)
+        VALUES (#{postId}, #{hashtagId}, NOW())
+    </insert>
+
+    <delete id="deletePostHashtag">
+        DELETE FROM post_hashtags WHERE post_id = #{postId} AND hashtag_id = #{hashtagId}
+    </delete>
+
+    <delete id="deletePostHashtagsByPostId">
+        DELETE FROM post_hashtags WHERE post_id = #{postId}
+    </delete>
+
+    <select id="getHotTopics" resultType="java.util.Map">
+        SELECT
+            h.hashtag_id as hashtagId,
+            h.tag_name as tagName,
+            COUNT(DISTINCT ph.post_id) as postCount,
+            COALESCE(SUM(comment_stats.comment_count), 0) as commentCount,
+            ROUND(
+                COUNT(DISTINCT ph.post_id) * 0.7 + COALESCE(SUM(comment_stats.comment_count), 0) * 0.3,
+                2
+            ) as heatScore
+        FROM hashtags h
+        INNER JOIN post_hashtags ph ON h.hashtag_id = ph.hashtag_id
+        INNER JOIN posts p ON ph.post_id = p.post_id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) as comment_count
+            FROM comments
+            WHERE created_at BETWEEN #{startDate} AND #{endDate}
+            GROUP BY post_id
+        ) comment_stats ON p.post_id = comment_stats.post_id
+        WHERE p.created_at BETWEEN #{startDate} AND #{endDate}
+        GROUP BY h.hashtag_id, h.tag_name
+        ORDER BY heatScore DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>
