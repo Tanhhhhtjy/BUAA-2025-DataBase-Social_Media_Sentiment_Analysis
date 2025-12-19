@@ -20,13 +20,6 @@ spring:
       max-lifetime: 900000
       connection-timeout: 20000
 
-  mybatis:
-    mapper-locations: classpath:mapper/*.xml
-    type-aliases-package: com.socialmedia.sentiment.entity
-    configuration:
-      map-underscore-to-camel-case: true
-      cache-enabled: true
-
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:dummy}
@@ -38,8 +31,16 @@ spring:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:mySecretKey123456789012345678901234567890}
+  secret: ${JWT_SECRET:myVeryLongAndSecureSecretKeyForHS512Algorithm1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ}
   expiration: 24 # hours
+
+# MyBatis Configuration (must be at top level, not under spring:)
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.socialmedia.sentiment.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
 
 # Logging
 logging:
