@@ -1,3 +1,5 @@
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+SET collation_connection = 'utf8mb4_unicode_ci';
 -- ============================================================================
 -- 社交媒体舆情分析系统 - 触发器脚本（修正版）
 -- ============================================================================
@@ -17,9 +19,10 @@ CREATE TRIGGER tr_post_after_insert
 AFTER INSERT ON posts
 FOR EACH ROW
 BEGIN
-    -- 自动创建初始情感分析记录（状态为UNANALYZED）
-    INSERT INTO post_sentiments (post_id, sentiment, confidence, analyzed_at, created_at)
-    VALUES (NEW.post_id, 'UNANALYZED', NULL, NULL, NOW());
+    IF NOT EXISTS (SELECT 1 FROM post_sentiments WHERE post_id = NEW.post_id) THEN
+        INSERT INTO post_sentiments (post_id, sentiment, confidence, analyzed_at, created_at)
+        VALUES (NEW.post_id, 'UNANALYZED', NULL, NULL, NOW());
+    END IF;
 END//
 
 -- ============================================================================
@@ -118,7 +121,7 @@ BEGIN
 
     -- 使用游标遍历帖子内容中的#话题#
     DECLARE hashtag_cursor CURSOR FOR
-        SELECT DISTINCT TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(NEW.content, '#', numbers.n), '#', -1)) as hashtag
+        SELECT DISTINCT TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(NEW.content, '#', numbers.n * 2), '#', -1)) as hashtag
         FROM (
             SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
             UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10
@@ -135,17 +138,27 @@ BEGIN
             LEAVE read_loop;
         END IF;
 
-        -- 检查话题是否已存在
-        SELECT hashtag_id INTO hashtag_id FROM hashtags WHERE tag_name = extracted_hashtag LIMIT 1;
-
-        -- 如果话题不存在，创建新话题
-        IF hashtag_id IS NULL THEN
-            INSERT INTO hashtags (tag_name, created_at) VALUES (extracted_hashtag, NOW());
-            SET hashtag_id = LAST_INSERT_ID();
+        SET hashtag_id = NULL;
+        IF extracted_hashtag IS NULL OR extracted_hashtag = '' THEN
+            ITERATE read_loop;
         END IF;
 
-        -- 关联帖子和话题
-        INSERT IGNORE INTO post_hashtags (post_id, hashtag_id) VALUES (NEW.post_id, hashtag_id);
+        SELECT hashtag_id INTO hashtag_id FROM hashtags WHERE tag_name = extracted_hashtag LIMIT 1;
+
+        IF hashtag_id IS NULL THEN
+            INSERT INTO hashtags (tag_name, created_at)
+            SELECT extracted_hashtag, NOW()
+            FROM DUAL
+            WHERE NOT EXISTS (
+                SELECT 1 FROM hashtags WHERE tag_name = extracted_hashtag
+            );
+
+            SELECT hashtag_id INTO hashtag_id FROM hashtags WHERE tag_name = extracted_hashtag LIMIT 1;
+        END IF;
+
+        IF hashtag_id IS NOT NULL THEN
+            INSERT IGNORE INTO post_hashtags (post_id, hashtag_id) VALUES (NEW.post_id, hashtag_id);
+        END IF;
     END LOOP;
     CLOSE hashtag_cursor;
 END//
@@ -239,14 +252,19 @@ BEGIN
             LEAVE read_loop;
         END IF;
 
-        -- 创建预警记录
         INSERT INTO alerts (keyword_id, content_type, content_id, summary, created_at)
-        VALUES (
+        SELECT
             v_keyword_id,
             'POST',
             NEW.post_id,
             CONCAT('帖子包含敏感关键词: ', v_keyword),
             NOW()
+        FROM DUAL
+        WHERE NOT EXISTS (
+            SELECT 1 FROM alerts a
+            WHERE a.keyword_id = v_keyword_id
+              AND a.content_type = 'POST'
+              AND a.content_id = NEW.post_id
         );
     END LOOP;
     CLOSE keyword_cursor;
@@ -284,14 +302,19 @@ BEGIN
             LEAVE read_loop;
         END IF;
 
-        -- 创建预警记录
         INSERT INTO alerts (keyword_id, content_type, content_id, summary, created_at)
-        VALUES (
+        SELECT
             v_keyword_id,
             'COMMENT',
             NEW.comment_id,
             CONCAT('评论包含敏感关键词: ', v_keyword),
             NOW()
+        FROM DUAL
+        WHERE NOT EXISTS (
+            SELECT 1 FROM alerts a
+            WHERE a.keyword_id = v_keyword_id
+              AND a.content_type = 'COMMENT'
+              AND a.content_id = NEW.comment_id
         );
     END LOOP;
     CLOSE keyword_cursor;
