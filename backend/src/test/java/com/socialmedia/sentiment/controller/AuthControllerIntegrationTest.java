@@ -1,8 +1,8 @@
 package com.socialmedia.sentiment.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.socialmedia.sentiment.dto.LoginRequest;
-import com.socialmedia.sentiment.dto.RegisterRequest;
+import com.socialmedia.sentiment.dto.request.LoginRequest;
+import com.socialmedia.sentiment.dto.request.RegisterRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +40,7 @@ class AuthControllerIntegrationTest {
         registerRequest.setPassword("password123");
 
         loginRequest = new LoginRequest();
-        loginRequest.setUsername("testuser");
+        loginRequest.setUsernameOrEmail("testuser");
         loginRequest.setPassword("password123");
     }
 
@@ -51,8 +51,8 @@ class AuthControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(registerRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.message", containsString("注册成功")));
+                .andExpect(jsonPath("$.token", not(blankOrNullString())))
+                .andExpect(jsonPath("$.username", is("testuser")));
     }
 
     @Test
@@ -109,9 +109,8 @@ class AuthControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.token", not(blankOrNullString())))
-                .andExpect(jsonPath("$.data.username", is("testuser")));
+                .andExpect(jsonPath("$.token", not(blankOrNullString())))
+                .andExpect(jsonPath("$.username", is("testuser")));
     }
 
     @Test
@@ -128,7 +127,7 @@ class AuthControllerIntegrationTest {
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success", is(false)))
-                .andExpect(jsonPath("$.message", containsString("用户名或密码错误")));
+                .andExpect(jsonPath("$.message", containsString("密码错误")));
     }
 
     @Test

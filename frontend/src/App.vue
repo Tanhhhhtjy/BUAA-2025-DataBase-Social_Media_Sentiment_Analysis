@@ -95,10 +95,25 @@ const logout = () => {
 
 .el-menu-item {
   color: white !important;
+  background-color: transparent !important;
 }
 
 .el-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 激活状态 - 保持白底蓝字，不受 focus/blur 影响 */
+.el-menu-item.is-active {
+  background-color: white !important;
+  color: #409eff !important;
+  border-bottom-color: transparent !important;
+}
+
+.el-menu-item.is-active:focus,
+.el-menu-item.is-active:active,
+.el-menu-item.is-active:hover {
+  background-color: white !important;
+  color: #409eff !important;
 }
 
 .auth-buttons {

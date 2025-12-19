@@ -1,6 +1,5 @@
 package com.socialmedia.sentiment.performance;
 
-import com.socialmedia.sentiment.entity.Post;
 import com.socialmedia.sentiment.service.PostService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,9 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * 帖子列表性能测试
- */
 @SpringBootTest
 class PostListPerformanceTest {
 
@@ -30,24 +26,20 @@ class PostListPerformanceTest {
 
     @BeforeEach
     void setUp() {
-        // 准备测试数据
-        // 注意：在实际测试中，应该使用真实的测试数据库
     }
 
     @Test
     void testConcurrentPostListAccess() throws InterruptedException {
-        // Given
         ExecutorService executor = Executors.newFixedThreadPool(CONCURRENT_USERS);
         CountDownLatch latch = new CountDownLatch(CONCURRENT_USERS);
         List<Long> responseTimes = new ArrayList<>();
 
-        // When - 模拟100个并发用户同时访问帖子列表
         for (int i = 0; i < CONCURRENT_USERS; i++) {
             executor.submit(() -> {
                 try {
                     long startTime = System.currentTimeMillis();
                     for (int j = 0; j < ITERATIONS_PER_USER; j++) {
-                        postService.getPostList(0, 20);
+                        postService.getPosts(0, 20);
                     }
                     long endTime = System.currentTimeMillis();
                     synchronized (responseTimes) {
@@ -61,15 +53,12 @@ class PostListPerformanceTest {
             });
         }
 
-        // 等待所有线程完成
         boolean completed = latch.await(30, TimeUnit.SECONDS);
         executor.shutdown();
         executor.awaitTermination(5, TimeUnit.SECONDS);
 
-        // Then
         assertTrue(completed, "所有并发请求应该完成");
 
-        // 统计响应时间
         if (!responseTimes.isEmpty()) {
             long totalTime = responseTimes.stream().mapToLong(Long::longValue).sum();
             double averageTime = (double) totalTime / responseTimes.size();
@@ -84,7 +73,6 @@ class PostListPerformanceTest {
             System.out.println("最小响应时间: " + minTime + "ms");
             System.out.println("总请求数: " + (CONCURRENT_USERS * ITERATIONS_PER_USER));
 
-            // 性能断言 - 应该在2秒内完成
             assertTrue(averageTime < 2000, "平均响应时间应该小于2秒");
             assertTrue(maxTime < 5000, "最大响应时间应该小于5秒");
         }
@@ -92,19 +80,16 @@ class PostListPerformanceTest {
 
     @Test
     void testPostListPaginationPerformance() {
-        // Given
         int[] pageSizes = {10, 20, 50, 100};
 
-        // When & Then
         for (int pageSize : pageSizes) {
             long startTime = System.currentTimeMillis();
-            postService.getPostList(0, pageSize);
+            postService.getPosts(0, pageSize);
             long endTime = System.currentTimeMillis();
 
             long duration = endTime - startTime;
             System.out.println("分页大小 " + pageSize + " 的响应时间: " + duration + "ms");
 
-            // 不同分页大小的性能要求
             if (pageSize <= 20) {
                 assertTrue(duration < 500, "小分页(<=20)应在500ms内响应");
             } else if (pageSize <= 50) {
@@ -117,10 +102,8 @@ class PostListPerformanceTest {
 
     @Test
     void testPostDetailPerformance() {
-        // Given
         long testPostId = 1L;
 
-        // When & Then
         long startTime = System.currentTimeMillis();
         postService.getPostById(testPostId);
         long endTime = System.currentTimeMillis();
@@ -128,7 +111,6 @@ class PostListPerformanceTest {
         long duration = endTime - startTime;
         System.out.println("帖子详情响应时间: " + duration + "ms");
 
-        // 帖子详情查询应该在500ms内完成
         assertTrue(duration < 500, "帖子详情查询应在500ms内完成");
     }
 }

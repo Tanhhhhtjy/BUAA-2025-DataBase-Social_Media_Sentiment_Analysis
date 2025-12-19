@@ -70,10 +70,10 @@ public class PostService {
             hashtagMapper.insertPostHashtag(post.getPostId(), hashtag.getHashtagId());
         }
 
-        PostSentiment sentiment = new PostSentiment();
-        sentiment.setPostId(post.getPostId());
-        sentiment.setSentiment("UNANALYZED");
-        sentimentMapper.insert(sentiment);
+//        PostSentiment sentiment = new PostSentiment();
+//        sentiment.setPostId(post.getPostId());
+//        sentiment.setSentiment("UNANALYZED");
+//        sentimentMapper.insert(sentiment);
 
         sentimentService.triggerAsyncAnalysis(post.getPostId(), request.getContent());
 

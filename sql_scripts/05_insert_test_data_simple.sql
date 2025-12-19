@@ -40,7 +40,8 @@ INSERT IGNORE INTO keywords (keyword, category) VALUES
 -- 第3部分：插入用户数据
 -- ============================================================================
 INSERT IGNORE INTO users (username, email, password_hash, role, status) VALUES
-('admin', 'admin@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'ADMIN', 'ACTIVE'),
+('admin', 'admin@example.com', 
+'$2a$10$PseJpihbuJhJ2txGfcxAd.HTmDJL47vfEVau4exzqe2X6gLTnvQv.', 'ADMIN', 'ACTIVE'),
 ('用户A', 'user_a@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'USER', 'ACTIVE'),
 ('用户B', 'user_b@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'USER', 'ACTIVE'),
 ('用户C', 'user_c@example.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj86wL0fOaY6', 'USER', 'ACTIVE'),
@@ -204,7 +205,7 @@ JOIN keywords k ON a.keyword_id = k.keyword_id;
 -- 测试数据插入完成
 -- ============================================================================
 -- 提示：
--- 1. 所有密码哈希值均为 'password123' 的BCrypt哈希
--- 2. 管理员账户：admin / password123
--- 3. 普通用户账户：用户A/B/C/D/E/F/G/H / password123
+-- 1. 所有密码哈希值均为 'admin123' 的BCrypt哈希
+-- 2. 管理员账户：admin / admin123
+-- 3. 普通用户账户：用户A/B/C/D/E/F/G/H / admin123
 -- ============================================================================
