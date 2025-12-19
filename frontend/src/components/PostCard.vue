@@ -39,7 +39,7 @@
         <el-tag :type="getSentimentType(post.sentiment)" size="small">
           {{ getSentimentText(post.sentiment) }}
         </el-tag>
-        <span class="comment-count">
+        <span class="comment-count" @click.stop="goToDetail" title="查看评论">
           <el-icon><ChatDotRound /></el-icon>
           {{ post.commentCount || 0 }}
         </span>
@@ -50,6 +50,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { MoreFilled, ChatDotRound } from '@element-plus/icons-vue'
@@ -63,7 +64,12 @@ const props = defineProps({
 
 const emit = defineEmits(['delete'])
 
+const router = useRouter()
 const authStore = useAuthStore()
+
+const goToDetail = () => {
+  router.push(`/posts/${props.post.postId}`)
+}
 
 const canDelete = computed(() => {
   return props.post.userId === authStore.user?.userId || authStore.isAdmin
@@ -196,5 +202,14 @@ const getSentimentText = (sentiment) => {
   gap: 4px;
   color: #909399;
   font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.comment-count:hover {
+  color: #409eff;
+  background-color: #ecf5ff;
 }
 </style>

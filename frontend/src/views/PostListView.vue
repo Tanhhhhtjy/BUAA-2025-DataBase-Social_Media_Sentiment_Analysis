@@ -1,7 +1,7 @@
 <template>
   <div class="post-list-view">
     <div class="page-header">
-      <h2>帖子列表</h2>
+      <h2>{{ pageTitle }}</h2>
       <el-button type="primary" @click="showCreateDialog = true">
         <el-icon><Plus /></el-icon>
         发布帖子
@@ -81,14 +81,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { usePostsStore } from '../stores/posts'
+import { hashtagsAPI } from '../api/hashtags'
 import { ElMessage } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import PostCard from '../components/PostCard.vue'
 import Pagination from '../components/Pagination.vue'
 
+const route = useRoute()
 const postsStore = usePostsStore()
+
+const hashtagId = computed(() => route.params.id)
+const hashtagName = ref('')
 
 const loading = ref(false)
 const creating = ref(false)
@@ -99,14 +105,43 @@ const newPost = ref({
 })
 
 const posts = computed(() => postsStore.posts)
-const currentPage = computed(() => postsStore.pagination.page)
+const currentPage = computed(() => postsStore.pagination.page + 1)
 const pageSize = computed(() => postsStore.pagination.size)
 const totalElements = computed(() => postsStore.pagination.totalElements)
+
+const pageTitle = computed(() => {
+  if (hashtagId.value && hashtagName.value) {
+    return `帖子列表(#${hashtagName.value})`
+  }
+  return '帖子列表'
+})
+
+const fetchHashtagInfo = async () => {
+  if (hashtagId.value) {
+    try {
+      const hashtag = await hashtagsAPI.getHashtag(hashtagId.value)
+      hashtagName.value = hashtag.tagName
+    } catch (error) {
+      console.error('获取话题信息失败', error)
+    }
+  }
+}
 
 const fetchPosts = async (page = 0, size = 20) => {
   loading.value = true
   try {
-    await postsStore.fetchPosts(page, size)
+    if (hashtagId.value) {
+      const response = await hashtagsAPI.getPostsByHashtag(hashtagId.value, { page, size })
+      postsStore.posts = response.content
+      postsStore.pagination = {
+        page: response.page,
+        size: response.size,
+        totalElements: response.totalElements,
+        totalPages: response.totalPages
+      }
+    } else {
+      await postsStore.fetchPosts(page, size)
+    }
   } catch (error) {
     ElMessage.error(error.message || '获取帖子列表失败')
   } finally {
@@ -115,7 +150,7 @@ const fetchPosts = async (page = 0, size = 20) => {
 }
 
 const handlePageChange = ({ page, size }) => {
-  fetchPosts(page, size)
+  fetchPosts(page - 1, size)
 }
 
 const handleSearch = () => {
@@ -134,7 +169,7 @@ const handleCreatePost = async () => {
     newPost.value.content = ''
     showCreateDialog.value = false
     ElMessage.success('发布成功')
-    fetchPosts(currentPage.value, pageSize.value)
+    fetchPosts(currentPage.value - 1, pageSize.value)
   } catch (error) {
     ElMessage.error(error.message || '发布失败')
   } finally {
@@ -151,7 +186,8 @@ const handleDeletePost = async (postId) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchHashtagInfo()
   fetchPosts()
 })
 </script>
