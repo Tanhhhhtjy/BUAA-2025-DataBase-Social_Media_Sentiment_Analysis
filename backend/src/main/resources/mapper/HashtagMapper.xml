@@ -30,9 +30,12 @@
     </delete>
 
     <select id="findAll" resultMap="HashtagResultMap">
-        SELECT hashtag_id, tag_name, created_at
-        FROM hashtags
-        ORDER BY created_at DESC
+        SELECT h.hashtag_id, h.tag_name, h.created_at
+        FROM hashtags h
+        WHERE EXISTS (
+            SELECT 1 FROM post_hashtags ph WHERE ph.hashtag_id = h.hashtag_id
+        )
+        ORDER BY h.created_at DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
@@ -45,7 +48,10 @@
     </select>
 
     <select id="count" resultType="long">
-        SELECT COUNT(*) FROM hashtags
+        SELECT COUNT(*) FROM hashtags h
+        WHERE EXISTS (
+            SELECT 1 FROM post_hashtags ph WHERE ph.hashtag_id = h.hashtag_id
+        )
     </select>
 
     <select id="existsByTagName" resultType="boolean">
