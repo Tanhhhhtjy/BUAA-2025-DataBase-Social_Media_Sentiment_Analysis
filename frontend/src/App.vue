@@ -7,6 +7,7 @@
           <el-menu
             mode="horizontal"
             :router="true"
+            :default-active="activeMenu"
             class="main-menu"
           >
             <el-menu-item index="/">首页</el-menu-item>
@@ -36,9 +37,21 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 
+const route = useRoute()
 const authStore = useAuthStore()
+
+const activeMenu = computed(() => {
+  const path = route.path
+  // 处理子路由，如 /posts/123 应该高亮 /posts
+  if (path.startsWith('/posts')) return '/posts'
+  if (path.startsWith('/hashtags')) return '/hashtags'
+  if (path.startsWith('/analytics')) return '/analytics'
+  if (path.startsWith('/admin')) return '/admin'
+  return path
+})
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const username = computed(() => authStore.user?.username)

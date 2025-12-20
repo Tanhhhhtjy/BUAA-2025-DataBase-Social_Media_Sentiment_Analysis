@@ -9,19 +9,6 @@
       style="width: 100%; max-width: 400px"
     />
 
-    <div class="hashtag-list" v-if="filteredHashtags.length > 0">
-      <el-tag
-        v-for="hashtag in filteredHashtags"
-        :key="hashtag.hashtagId"
-        class="hashtag-item"
-        :type="isSelected(hashtag.hashtagId) ? 'primary' : 'info'"
-        @click="toggleSelection(hashtag)"
-      >
-        #{{ hashtag.tagName }}
-        <span class="post-count">({{ hashtag.postCount }})</span>
-      </el-tag>
-    </div>
-
     <div class="selected-hashtags" v-if="selectedHashtags.length > 0">
       <span class="label">已选择话题:</span>
       <el-tag
@@ -48,7 +35,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['change'])
+const emit = defineEmits(['change', 'filter'])
 
 const filterKeyword = ref('')
 const selectedHashtags = ref([])
@@ -82,7 +69,7 @@ const removeSelection = (hashtagId) => {
 }
 
 const handleFilter = () => {
-  // 过滤逻辑在 computed 中处理
+  emit('filter', filterKeyword.value)
 }
 
 watch(selectedHashtags, (newVal) => {
@@ -96,32 +83,6 @@ watch(selectedHashtags, (newVal) => {
   background: #f5f7fa;
   border-radius: 8px;
   margin-bottom: 20px;
-}
-
-.hashtag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.hashtag-item {
-  cursor: pointer;
-  transition: all 0.2s;
-  margin: 0;
-}
-
-.hashtag-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.post-count {
-  font-size: 12px;
-  margin-left: 4px;
-  opacity: 0.7;
 }
 
 .selected-hashtags {

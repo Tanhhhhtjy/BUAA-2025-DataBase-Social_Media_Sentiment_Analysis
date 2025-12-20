@@ -6,7 +6,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,66 +26,50 @@ public class AnalyticsController {
 
     @GetMapping("/hot-topics")
     public ResponseEntity<List<Map<String, Object>>> getHotTopics(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(defaultValue = "10") int limit) {
 
-        if (startDate == null) {
-            startDate = LocalDateTime.now().minusDays(30);
-        }
-        if (endDate == null) {
-            endDate = LocalDateTime.now();
-        }
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : LocalDateTime.now().minusDays(30);
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : LocalDateTime.now();
 
-        List<Map<String, Object>> hotTopics = analyticsService.getHotTopics(startDate, endDate, limit);
+        List<Map<String, Object>> hotTopics = analyticsService.getHotTopics(startDateTime, endDateTime, limit);
         return ResponseEntity.ok(hotTopics);
     }
 
     @GetMapping("/sentiment-trend")
     public ResponseEntity<List<Map<String, Object>>> getSentimentTrend(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        if (startDate == null) {
-            startDate = LocalDateTime.now().minusDays(30);
-        }
-        if (endDate == null) {
-            endDate = LocalDateTime.now();
-        }
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : LocalDateTime.now().minusDays(30);
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : LocalDateTime.now();
 
-        List<Map<String, Object>> trend = analyticsService.getSentimentTrend(startDate, endDate);
+        List<Map<String, Object>> trend = analyticsService.getSentimentTrend(startDateTime, endDateTime);
         return ResponseEntity.ok(trend);
     }
 
     @GetMapping("/sentiment-distribution")
     public ResponseEntity<List<Map<String, Object>>> getSentimentDistribution(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        if (startDate == null) {
-            startDate = LocalDateTime.now().minusDays(30);
-        }
-        if (endDate == null) {
-            endDate = LocalDateTime.now();
-        }
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : LocalDateTime.now().minusDays(30);
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : LocalDateTime.now();
 
-        List<Map<String, Object>> distribution = analyticsService.getSentimentDistribution(startDate, endDate);
+        List<Map<String, Object>> distribution = analyticsService.getSentimentDistribution(startDateTime, endDateTime);
         return ResponseEntity.ok(distribution);
     }
 
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getOverallStats(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        if (startDate == null) {
-            startDate = LocalDateTime.now().minusDays(30);
-        }
-        if (endDate == null) {
-            endDate = LocalDateTime.now();
-        }
+        LocalDateTime startDateTime = startDate != null ? startDate.atStartOfDay() : LocalDateTime.now().minusDays(30);
+        LocalDateTime endDateTime = endDate != null ? endDate.atTime(LocalTime.MAX) : LocalDateTime.now();
 
-        Map<String, Object> stats = analyticsService.getOverallStats(startDate, endDate);
+        Map<String, Object> stats = analyticsService.getOverallStats(startDateTime, endDateTime);
         return ResponseEntity.ok(stats);
     }
 }

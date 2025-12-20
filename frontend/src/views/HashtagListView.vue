@@ -7,6 +7,7 @@
     <HashtagFilter
       :hashtags="hashtags"
       @change="handleHashtagSelectionChange"
+      @filter="handleFilter"
     />
 
     <div class="hashtag-stats" v-if="selectedHashtags.length > 0">
@@ -24,10 +25,10 @@
     </div>
 
     <div class="hashtags-container" v-loading="loading">
-      <template v-if="hashtags.length > 0">
+      <template v-if="filteredHashtags.length > 0">
         <div class="hashtag-grid">
           <el-card
-            v-for="hashtag in hashtags"
+            v-for="hashtag in filteredHashtags"
             :key="hashtag.hashtagId"
             class="hashtag-card"
             shadow="hover"
@@ -74,9 +75,19 @@ const hashtagsStore = useHashtagsStore()
 
 const loading = ref(false)
 const selectedHashtags = ref([])
+const filterKeyword = ref('')
 
 const hashtags = computed(() => hashtagsStore.hashtags)
-const currentPage = computed(() => hashtagsStore.pagination.page)
+const filteredHashtags = computed(() => {
+  if (!filterKeyword.value) {
+    return hashtags.value
+  }
+  const keyword = filterKeyword.value.toLowerCase()
+  return hashtags.value.filter(h =>
+    h.tagName.toLowerCase().includes(keyword)
+  )
+})
+const currentPage = computed(() => hashtagsStore.pagination.page + 1)
 const pageSize = computed(() => hashtagsStore.pagination.size)
 const totalElements = computed(() => hashtagsStore.pagination.totalElements)
 
@@ -92,11 +103,15 @@ const fetchHashtags = async (page = 0, size = 20) => {
 }
 
 const handlePageChange = ({ page, size }) => {
-  fetchHashtags(page, size)
+  fetchHashtags(page - 1, size)
 }
 
 const handleHashtagSelectionChange = (selected) => {
   selectedHashtags.value = selected
+}
+
+const handleFilter = (keyword) => {
+  filterKeyword.value = keyword
 }
 
 const navigateToHashtagPosts = (hashtag) => {
