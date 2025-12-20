@@ -17,11 +17,13 @@ public class UserService {
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AlertService alertService;
 
     @Autowired
-    public UserService(UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserService(UserMapper userMapper, PasswordEncoder passwordEncoder, AlertService alertService) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.alertService = alertService;
     }
 
     @Transactional
@@ -97,6 +99,7 @@ public class UserService {
     @Transactional
     public void deleteUser(Long userId) {
         User user = findById(userId);
+        alertService.deleteByUserId(userId);
         userMapper.deleteById(userId);
     }
 

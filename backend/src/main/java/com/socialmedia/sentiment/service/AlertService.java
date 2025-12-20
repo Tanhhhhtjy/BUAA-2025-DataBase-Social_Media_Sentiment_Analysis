@@ -68,4 +68,14 @@ public class AlertService {
         findById(alertId); // 验证存在
         alertMapper.deleteById(alertId);
     }
+
+    @Transactional
+    public void deleteByContent(String contentType, Long contentId) {
+        alertMapper.deleteByContent(contentType, contentId);
+    }
+
+    @Transactional
+    public void deleteByUserId(Long userId) {
+        alertMapper.deleteByUserId(userId);
+    }
 }

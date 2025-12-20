@@ -10,6 +10,12 @@ SET collation_connection = 'utf8mb4_unicode_ci';
 
 DELIMITER //
 
+DROP TRIGGER IF EXISTS tr_user_before_update;
+DROP TRIGGER IF EXISTS tr_post_before_delete;
+DROP TRIGGER IF EXISTS tr_comment_before_delete;
+DROP TRIGGER IF EXISTS tr_user_before_delete;
+DROP TRIGGER IF EXISTS tr_post_extract_hashtags;
+
 -- ============================================================================
 -- 1. 帖子创建时自动初始化情感分析记录
 -- ============================================================================
@@ -23,144 +29,6 @@ BEGIN
         INSERT INTO post_sentiments (post_id, sentiment, confidence, analyzed_at, created_at)
         VALUES (NEW.post_id, 'UNANALYZED', NULL, NULL, NOW());
     END IF;
-END//
-
--- ============================================================================
--- 2. 用户更新时间自动维护触发器
--- ============================================================================
-DROP TRIGGER IF EXISTS tr_user_before_update;
-
-CREATE TRIGGER tr_user_before_update
-BEFORE UPDATE ON users
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = NOW();
-END//
-
--- ============================================================================
--- 3. 帖子删除时级联清理触发器
--- ============================================================================
-DROP TRIGGER IF EXISTS tr_post_before_delete;
-
-CREATE TRIGGER tr_post_before_delete
-BEFORE DELETE ON posts
-FOR EACH ROW
-BEGIN
-    -- 删除关联的评论
-    DELETE FROM comments WHERE post_id = OLD.post_id;
-
-    -- 删除关联的话题标签
-    DELETE FROM post_hashtags WHERE post_id = OLD.post_id;
-
-    -- 删除关联的情感分析记录
-    DELETE FROM post_sentiments WHERE post_id = OLD.post_id;
-
-    -- 删除关联的预警记录
-    DELETE FROM alerts WHERE content_type = 'POST' AND content_id = OLD.post_id;
-END//
-
--- ============================================================================
--- 4. 评论删除时清理预警记录触发器
--- ============================================================================
-DROP TRIGGER IF EXISTS tr_comment_before_delete;
-
-CREATE TRIGGER tr_comment_before_delete
-BEFORE DELETE ON comments
-FOR EACH ROW
-BEGIN
-    -- 删除关联的预警记录
-    DELETE FROM alerts WHERE content_type = 'COMMENT' AND content_id = OLD.comment_id;
-END//
-
--- ============================================================================
--- 5. 用户删除时级联清理触发器
--- ============================================================================
-DROP TRIGGER IF EXISTS tr_user_before_delete;
-
-CREATE TRIGGER tr_user_before_delete
-BEFORE DELETE ON users
-FOR EACH ROW
-BEGIN
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE v_post_id BIGINT;
-    DECLARE post_cursor CURSOR FOR SELECT post_id FROM posts WHERE user_id = OLD.user_id;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
-    -- 删除用户的所有评论
-    DELETE FROM comments WHERE user_id = OLD.user_id;
-
-    -- 遍历删除用户的所有帖子（会触发帖子删除触发器）
-    OPEN post_cursor;
-    read_loop: LOOP
-        FETCH post_cursor INTO v_post_id;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-        -- 触发帖子删除触发器
-        DELETE FROM posts WHERE post_id = v_post_id;
-    END LOOP;
-    CLOSE post_cursor;
-
-    -- 删除用户的预警记录
-END//
-
--- ============================================================================
--- 6. 帖子内容话题提取触发器
--- ============================================================================
-DROP TRIGGER IF EXISTS tr_post_extract_hashtags;
-
-CREATE TRIGGER tr_post_extract_hashtags
-AFTER INSERT ON posts
-FOR EACH ROW
-BEGIN
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE hashtag_name VARCHAR(50);
-    DECLARE hashtag_id BIGINT;
-    DECLARE pos INT;
-    DECLARE extracted_hashtag VARCHAR(50);
-
-    -- 使用游标遍历帖子内容中的#话题#
-    DECLARE hashtag_cursor CURSOR FOR
-        SELECT DISTINCT TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(NEW.content, '#', numbers.n * 2), '#', -1)) as hashtag
-        FROM (
-            SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
-            UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10
-        ) numbers
-        WHERE CHAR_LENGTH(NEW.content) - CHAR_LENGTH(REPLACE(NEW.content, '#', '')) >= numbers.n * 2
-        AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(NEW.content, '#', numbers.n * 2), '#', -1)) != '';
-
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
-    OPEN hashtag_cursor;
-    read_loop: LOOP
-        FETCH hashtag_cursor INTO extracted_hashtag;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-
-        SET hashtag_id = NULL;
-        IF extracted_hashtag IS NULL OR extracted_hashtag = '' THEN
-            ITERATE read_loop;
-        END IF;
-
-        SELECT hashtag_id INTO hashtag_id FROM hashtags WHERE tag_name = extracted_hashtag LIMIT 1;
-
-        IF hashtag_id IS NULL THEN
-            INSERT INTO hashtags (tag_name, created_at)
-            SELECT extracted_hashtag, NOW()
-            FROM DUAL
-            WHERE NOT EXISTS (
-                SELECT 1 FROM hashtags WHERE tag_name = extracted_hashtag
-            );
-
-            SELECT hashtag_id INTO hashtag_id FROM hashtags WHERE tag_name = extracted_hashtag LIMIT 1;
-        END IF;
-
-        IF hashtag_id IS NOT NULL THEN
-            INSERT IGNORE INTO post_hashtags (post_id, hashtag_id) VALUES (NEW.post_id, hashtag_id);
-        END IF;
-    END LOOP;
-    CLOSE hashtag_cursor;
 END//
 
 -- ============================================================================

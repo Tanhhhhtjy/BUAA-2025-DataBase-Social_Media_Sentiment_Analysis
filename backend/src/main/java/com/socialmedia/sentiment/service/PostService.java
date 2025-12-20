@@ -30,11 +30,13 @@ public class PostService {
     private final SentimentMapper sentimentMapper;
     private final HashtagExtractor hashtagExtractor;
     private final SentimentService sentimentService;
+    private final AlertService alertService;
 
     @Autowired
     public PostService(PostMapper postMapper, UserMapper userMapper, HashtagMapper hashtagMapper,
                        CommentMapper commentMapper, SentimentMapper sentimentMapper,
-                       HashtagExtractor hashtagExtractor, SentimentService sentimentService) {
+                       HashtagExtractor hashtagExtractor, SentimentService sentimentService,
+                       AlertService alertService) {
         this.postMapper = postMapper;
         this.userMapper = userMapper;
         this.hashtagMapper = hashtagMapper;
@@ -42,6 +44,7 @@ public class PostService {
         this.sentimentMapper = sentimentMapper;
         this.hashtagExtractor = hashtagExtractor;
         this.sentimentService = sentimentService;
+        this.alertService = alertService;
     }
 
     @Transactional
@@ -137,9 +140,7 @@ public class PostService {
             }
         }
 
-        hashtagMapper.deletePostHashtagsByPostId(postId);
-        commentMapper.deleteByPostId(postId);
-        sentimentMapper.deleteByPostId(postId);
+        alertService.deleteByContent("POST", postId);
         postMapper.deleteById(postId);
     }
 

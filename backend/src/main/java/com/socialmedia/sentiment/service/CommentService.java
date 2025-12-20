@@ -22,12 +22,15 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final PostMapper postMapper;
     private final UserMapper userMapper;
+    private final AlertService alertService;
 
     @Autowired
-    public CommentService(CommentMapper commentMapper, PostMapper postMapper, UserMapper userMapper) {
+    public CommentService(CommentMapper commentMapper, PostMapper postMapper, UserMapper userMapper,
+                          AlertService alertService) {
         this.commentMapper = commentMapper;
         this.postMapper = postMapper;
         this.userMapper = userMapper;
+        this.alertService = alertService;
     }
 
     @Transactional
@@ -87,6 +90,7 @@ public class CommentService {
             }
         }
 
+        alertService.deleteByContent("COMMENT", commentId);
         commentMapper.deleteById(commentId);
     }
 

@@ -48,14 +48,13 @@
             email = #{email},
             password_hash = #{passwordHash},
             role = #{role},
-            status = #{status},
-            updated_at = NOW()
+            status = #{status}
         WHERE user_id = #{userId}
     </update>
 
     <update id="updateStatus">
         UPDATE users
-        SET status = #{status}, updated_at = NOW()
+        SET status = #{status}
         WHERE user_id = #{userId}
     </update>
 

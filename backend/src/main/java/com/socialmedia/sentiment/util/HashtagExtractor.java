@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 @Component
 public class HashtagExtractor {
 
-    private static final Pattern HASHTAG_PATTERN = Pattern.compile("#([^#]+)#");
+    private static final Pattern HASHTAG_PATTERN = Pattern.compile("#([^\\s#][^\\s#]*)");
 
     public List<String> extractHashtags(String content) {
         if (content == null || content.isEmpty()) {
@@ -36,7 +36,7 @@ public class HashtagExtractor {
         if (content == null || content.isEmpty()) {
             return content;
         }
-        return content.replaceAll("#[^#]+#", "").trim();
+        return content.replaceAll("#[^\\s#][^\\s#]*", "").trim();
     }
 
     public int countHashtags(String content) {

@@ -42,6 +42,12 @@
         DELETE FROM alerts WHERE alert_id = #{alertId}
     </delete>
 
+    <delete id="deleteByContent">
+        DELETE FROM alerts
+        WHERE content_type = #{contentType}
+          AND content_id = #{contentId}
+    </delete>
+
     <select id="findAll" resultMap="AlertResultMap">
         SELECT a.alert_id, a.content_type, a.content_id, a.keyword_id, a.summary, a.created_at,
                k.keyword,
@@ -103,5 +109,15 @@
         SELECT COUNT(*) FROM alerts
         WHERE created_at >= DATE_SUB(NOW(), INTERVAL #{hours} HOUR)
     </select>
+
+    <delete id="deleteByUserId">
+        DELETE FROM alerts
+        WHERE (content_type = 'POST' AND content_id IN (
+            SELECT post_id FROM posts WHERE user_id = #{userId}
+        ))
+           OR (content_type = 'COMMENT' AND content_id IN (
+            SELECT comment_id FROM comments WHERE user_id = #{userId}
+        ))
+    </delete>
 
 </mapper>
