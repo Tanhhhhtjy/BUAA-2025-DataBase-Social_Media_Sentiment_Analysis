@@ -29,6 +29,7 @@
           :key="post.postId"
           :post="post"
           @delete="handleDeletePost"
+          @update="handleUpdatePost"
         />
       </template>
       <el-empty v-else description="暂无帖子数据" />
@@ -184,6 +185,11 @@ const handleDeletePost = async (postId) => {
   } catch (error) {
     ElMessage.error(error.message || '删除失败')
   }
+}
+
+const handleUpdatePost = (updatedPost) => {
+  // 刷新帖子列表以显示更新后的内容
+  fetchPosts(currentPage.value - 1, pageSize.value)
 }
 
 onMounted(async () => {

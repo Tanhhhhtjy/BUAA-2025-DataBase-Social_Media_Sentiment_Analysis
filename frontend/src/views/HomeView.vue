@@ -75,6 +75,8 @@
           v-for="post in recentPosts"
           :key="post.postId"
           :post="post"
+          @delete="handleDeletePost"
+          @update="handleUpdatePost"
         />
       </div>
     </div>
@@ -108,6 +110,19 @@ const fetchRecentPosts = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handleDeletePost = async (postId) => {
+  try {
+    await postsStore.deletePost(postId)
+    fetchRecentPosts()
+  } catch (error) {
+    console.error('删除帖子失败:', error)
+  }
+}
+
+const handleUpdatePost = () => {
+  fetchRecentPosts()
 }
 
 onMounted(() => {

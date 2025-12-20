@@ -27,6 +27,15 @@ export const postsAPI = {
     })
   },
 
+  // 更新帖子
+  updatePost(id, data) {
+    return request({
+      url: `/posts/${id}`,
+      method: 'put',
+      data
+    })
+  },
+
   // 删除帖子
   deletePost(id) {
     return request({

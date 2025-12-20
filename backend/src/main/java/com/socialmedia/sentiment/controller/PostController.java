@@ -64,6 +64,15 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{postId}")
+    public ResponseEntity<PostResponse> updatePost(@PathVariable Long postId,
+                                                   @Valid @RequestBody PostCreateRequest request,
+                                                   HttpServletRequest httpRequest) {
+        Long userId = (Long) httpRequest.getAttribute("userId");
+        PostResponse response = postService.updatePost(postId, userId, request);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{postId}")
     public ResponseEntity<Map<String, Object>> deletePost(@PathVariable Long postId,
                                                           HttpServletRequest httpRequest) {

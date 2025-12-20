@@ -128,6 +128,45 @@ public class PostService {
     }
 
     @Transactional
+    public PostResponse updatePost(Long postId, Long userId, PostCreateRequest request) {
+        Post post = postMapper.findById(postId);
+        if (post == null) {
+            throw new IllegalArgumentException("帖子不存在");
+        }
+        if (!post.getUserId().equals(userId)) {
+            User user = userMapper.findById(userId);
+            if (user == null || !user.isAdmin()) {
+                throw new IllegalArgumentException("无权编辑此帖子");
+            }
+        }
+
+        // 更新帖子内容
+        post.setContent(request.getContent());
+        postMapper.update(post);
+
+        // 删除旧的话题关联
+        hashtagMapper.deletePostHashtagsByPostId(postId);
+
+        // 提取并关联新的话题
+        List<String> hashtags = hashtagExtractor.extractHashtags(request.getContent());
+        for (String tagName : hashtags) {
+            Hashtag hashtag = hashtagMapper.findByTagName(tagName);
+            if (hashtag == null) {
+                hashtag = new Hashtag();
+                hashtag.setTagName(tagName);
+                hashtagMapper.insert(hashtag);
+            }
+            hashtagMapper.insertPostHashtag(postId, hashtag.getHashtagId());
+        }
+
+        // 重新触发情感分析
+        sentimentMapper.deleteByPostId(postId);
+        sentimentService.triggerAsyncAnalysis(postId, request.getContent());
+
+        return buildFullPostResponse(post);
+    }
+
+    @Transactional
     public void deletePost(Long postId, Long userId) {
         Post post = postMapper.findById(postId);
         if (post == null) {

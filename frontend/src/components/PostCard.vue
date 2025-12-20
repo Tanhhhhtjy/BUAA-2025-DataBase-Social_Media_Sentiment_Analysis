@@ -8,11 +8,12 @@
           <span class="timestamp">{{ formatDate(post.createdAt) }}</span>
         </div>
       </div>
-      <el-dropdown v-if="canDelete" @command="handleCommand">
+      <el-dropdown v-if="canModify" @command="handleCommand">
         <el-button type="text" :icon="MoreFilled"></el-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="delete">删除</el-dropdown-item>
+            <el-dropdown-item command="edit">编辑</el-dropdown-item>
+            <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
@@ -45,13 +46,42 @@
         </span>
       </div>
     </div>
+
+    <!-- 编辑对话框 -->
+    <el-dialog
+      v-model="editDialogVisible"
+      title="编辑帖子"
+      width="500px"
+      :close-on-click-modal="false"
+      @close="resetEditForm"
+    >
+      <el-form :model="editForm" label-width="0">
+        <el-form-item>
+          <el-input
+            v-model="editForm.content"
+            type="textarea"
+            :rows="5"
+            placeholder="请输入帖子内容，使用 #话题# 添加话题标签"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitEdit" :loading="editLoading">
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { postsAPI } from '../api/posts'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { MoreFilled, ChatDotRound } from '@element-plus/icons-vue'
 
@@ -62,21 +92,30 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['delete'])
+const emit = defineEmits(['delete', 'update'])
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+// 编辑相关状态
+const editDialogVisible = ref(false)
+const editLoading = ref(false)
+const editForm = reactive({
+  content: ''
+})
 
 const goToDetail = () => {
   router.push(`/posts/${props.post.postId}`)
 }
 
-const canDelete = computed(() => {
+const canModify = computed(() => {
   return props.post.userId === authStore.user?.userId || authStore.isAdmin
 })
 
 const handleCommand = (command) => {
-  if (command === 'delete') {
+  if (command === 'edit') {
+    openEditDialog()
+  } else if (command === 'delete') {
     ElMessageBox.confirm('确定要删除这条帖子吗？', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
@@ -85,6 +124,36 @@ const handleCommand = (command) => {
       emit('delete', props.post.postId)
       ElMessage.success('删除成功')
     }).catch(() => {})
+  }
+}
+
+const openEditDialog = () => {
+  editForm.content = props.post.content
+  editDialogVisible.value = true
+}
+
+const resetEditForm = () => {
+  editForm.content = ''
+}
+
+const submitEdit = async () => {
+  if (!editForm.content.trim()) {
+    ElMessage.warning('帖子内容不能为空')
+    return
+  }
+
+  editLoading.value = true
+  try {
+    const updatedPost = await postsAPI.updatePost(props.post.postId, {
+      content: editForm.content
+    })
+    ElMessage.success('编辑成功')
+    editDialogVisible.value = false
+    emit('update', updatedPost)
+  } catch (error) {
+    ElMessage.error(error.message || '编辑失败')
+  } finally {
+    editLoading.value = false
   }
 }
 
