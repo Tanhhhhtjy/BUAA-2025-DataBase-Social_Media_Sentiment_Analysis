@@ -92,5 +92,21 @@ export const adminAPI = {
       url: `/admin/alerts/${alertId}/handle`,
       method: 'put'
     })
+  },
+
+  // 删除预警
+  deleteAlert(alertId) {
+    return request({
+      url: `/admin/alerts/${alertId}`,
+      method: 'delete'
+    })
+  },
+
+  // 扫描所有帖子生成预警
+  scanAllPosts() {
+    return request({
+      url: '/admin/alerts/scan',
+      method: 'post'
+    })
   }
 }

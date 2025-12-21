@@ -8,15 +8,18 @@ public class Alert {
     private Long contentId;
     private Long keywordId;
     private String summary;
+    private Integer status; // 0: Unhandled, 1: Handled
     private LocalDateTime createdAt;
 
-    public Alert() {}
+    public Alert() {
+    }
 
     public Alert(String contentType, Long contentId, Long keywordId, String summary) {
         this.contentType = contentType;
         this.contentId = contentId;
         this.keywordId = keywordId;
         this.summary = summary;
+        this.status = 0;
     }
 
     public Long getAlertId() {
@@ -57,6 +60,14 @@ public class Alert {
 
     public void setSummary(String summary) {
         this.summary = summary;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreatedAt() {

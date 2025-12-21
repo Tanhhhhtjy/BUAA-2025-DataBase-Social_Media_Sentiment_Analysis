@@ -56,10 +56,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     request.setAttribute("role", role);
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    logger.debug("已认证用户: " + username + ", 角色: " + role);
+                } else {
+                    logger.debug("Token验证失败");
                 }
             } catch (Exception e) {
-                logger.error("JWT认证失败: " + e.getMessage());
+                logger.error("JWT认证处理异常: " + e.getMessage());
             }
+        } else {
+            logger.debug("未找到有效的Authorization header: " + request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);

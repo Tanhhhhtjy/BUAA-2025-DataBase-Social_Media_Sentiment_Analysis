@@ -9,6 +9,10 @@
           <el-option label="最近72小时" :value="72" />
           <el-option label="最近7天" :value="168" />
         </el-select>
+        <el-button @click="handleScan" :loading="scanning" type="primary">
+          <el-icon><Search /></el-icon>
+          扫描全部
+        </el-button>
         <el-button @click="fetchAlerts" :loading="loading">
           <el-icon><Refresh /></el-icon>
           刷新
@@ -25,12 +29,7 @@
       style="margin-bottom: 20px"
     />
 
-    <el-table
-      v-loading="loading"
-      :data="alerts"
-      stripe
-      style="width: 100%"
-    >
+    <el-table v-loading="loading" :data="alerts" stripe style="width: 100%">
       <el-table-column prop="alertId" label="ID" width="80" />
       <el-table-column prop="contentType" label="类型" width="100">
         <template #default="{ row }">
@@ -57,17 +56,19 @@
           {{ formatDate(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" width="180">
+      <el-table-column label="操作" fixed="right" width="240">
         <template #default="{ row }">
-          <el-button type="primary" size="small" @click="viewContent(row)">
-            查看
-          </el-button>
-          <el-button type="success" size="small" @click="handleMark(row)">
-            已处理
-          </el-button>
-          <el-button type="danger" size="small" @click="handleDelete(row)">
-            删除
-          </el-button>
+          <div class="action-buttons">
+            <el-button type="primary" size="small" @click="viewContent(row)"> 查看 </el-button>
+            <el-button
+              :type="row.status === 1 ? 'success' : 'warning'"
+              size="small"
+              @click="handleMark(row)"
+            >
+              {{ row.status === 1 ? '已处理' : '处理' }}
+            </el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -87,11 +88,7 @@
     </div>
 
     <!-- 内容详情对话框 -->
-    <el-dialog
-      v-model="detailDialogVisible"
-      title="内容详情"
-      width="500px"
-    >
+    <el-dialog v-model="detailDialogVisible" title="内容详情" width="500px">
       <div v-if="selectedAlert" class="alert-detail">
         <el-descriptions :column="1" border>
           <el-descriptions-item label="类型">
@@ -118,10 +115,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import { adminAPI } from '../../api/admin'
 
 const loading = ref(false)
+const scanning = ref(false)
 const alerts = ref([])
 const total = ref(0)
 const currentPage = ref(1)
@@ -148,39 +146,65 @@ const fetchAlerts = async () => {
   }
 }
 
-const handlePageChange = (page) => {
+const handlePageChange = page => {
   currentPage.value = page
   fetchAlerts()
 }
 
-const handleSizeChange = (size) => {
+const handleSizeChange = size => {
   pageSize.value = size
   currentPage.value = 1
   fetchAlerts()
 }
 
-const viewContent = (alert) => {
+const handleScan = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '此操作将扫描所有帖子并重新生成预警信息，可能会消耗一定时间，且会覆盖旧的预警记录（已处理状态可能会重置）。确定要继续吗？',
+      '确认全量扫描',
+      { type: 'warning', confirmButtonText: '开始扫描', cancelButtonText: '取消' }
+    )
+    scanning.value = true
+    await adminAPI.scanAllPosts()
+    ElMessage.success('扫描完成')
+    fetchAlerts()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '扫描失败')
+    }
+  } finally {
+    scanning.value = false
+  }
+}
+
+const viewContent = alert => {
   selectedAlert.value = alert
   detailDialogVisible.value = true
 }
 
-const handleMark = async (alert) => {
+const handleMark = async alert => {
   try {
     await adminAPI.markAlertHandled(alert.alertId)
-    ElMessage.success('已标记为已处理')
-    fetchAlerts()
+    const newStatus = alert.status === 1 ? 0 : 1
+    const action = newStatus === 1 ? '已处理' : '未处理'
+
+    // Optimistically update UI
+    const index = alerts.value.findIndex(a => a.alertId === alert.alertId)
+    if (index !== -1) {
+      alerts.value[index].status = newStatus
+    }
+
+    ElMessage.success(`已标记为${action}`)
+    // No need to fetchAlerts() immediately if we update locally
   } catch (error) {
     ElMessage.error(error.message || '操作失败')
+    fetchAlerts() // Revert on error
   }
 }
 
-const handleDelete = async (alert) => {
+const handleDelete = async alert => {
   try {
-    await ElMessageBox.confirm(
-      '确定要删除这条预警吗？',
-      '确认删除',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm('确定要删除这条预警吗？', '确认删除', { type: 'warning' })
     await adminAPI.deleteAlert(alert.alertId)
     ElMessage.success('预警已删除')
     fetchAlerts()
@@ -196,7 +220,7 @@ const truncate = (text, length) => {
   return text.length > length ? text.substring(0, length) + '...' : text
 }
 
-const formatDate = (dateStr) => {
+const formatDate = dateStr => {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleString('zh-CN')
 }
@@ -241,6 +265,18 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.action-buttons {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+:deep(.action-buttons .el-button + .el-button) {
+  margin-left: 0;
 }
 
 .alert-detail {

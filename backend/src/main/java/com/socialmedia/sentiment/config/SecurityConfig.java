@@ -38,6 +38,8 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/health/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                // Allow OPTIONS requests for CORS preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Allow GET requests for posts, hashtags, and analytics (read operations)
                 .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/hashtags/**").permitAll()

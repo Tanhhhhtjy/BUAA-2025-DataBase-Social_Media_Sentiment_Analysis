@@ -27,7 +27,9 @@ request.interceptors.response.use(
     return response.data
   },
   (error) => {
-    if (error.response?.status === 401) {
+    // Check if the error is 401 and it's NOT a login request
+    // We don't want to redirect/refresh if the user is currently trying to login and failed
+    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
       const authStore = useAuthStore()
       authStore.logout()
       window.location.href = '/login'

@@ -20,6 +20,10 @@ public interface AlertMapper {
 
     int deleteByContent(@Param("contentType") String contentType, @Param("contentId") Long contentId);
 
+    List<Alert> findByContent(@Param("contentType") String contentType, @Param("contentId") Long contentId);
+
+    void deleteByKeywordId(@Param("keywordId") Long keywordId);
+
     List<Alert> findAll(@Param("offset") int offset, @Param("limit") int limit);
 
     List<Alert> findRecent(@Param("hours") int hours, @Param("offset") int offset, @Param("limit") int limit);

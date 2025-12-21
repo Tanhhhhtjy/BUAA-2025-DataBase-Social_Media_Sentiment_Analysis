@@ -2,7 +2,9 @@
   <div class="post-card">
     <div class="post-header">
       <div class="user-info">
-        <el-avatar :size="40" class="custom-avatar">{{ post.username?.[0]?.toUpperCase() }}</el-avatar>
+        <el-avatar :size="40" class="custom-avatar">{{
+          post.username?.[0]?.toUpperCase()
+        }}</el-avatar>
         <div class="user-details">
           <span class="username">{{ post.username }}</span>
           <span class="timestamp">{{ formatDate(post.createdAt) }}</span>
@@ -25,13 +27,7 @@
 
     <div class="post-footer">
       <div class="hashtags" v-if="post.hashtags && post.hashtags.length > 0">
-        <span
-          v-for="tag in post.hashtags"
-          :key="tag"
-          class="hashtag-pill"
-        >
-          #{{ tag }}
-        </span>
+        <span v-for="tag in post.hashtags" :key="tag" class="hashtag-pill"> #{{ tag }} </span>
       </div>
       <div class="post-stats">
         <div class="sentiment-area">
@@ -41,9 +37,6 @@
           </span>
           <el-button
             v-if="post.sentiment === 'UNANALYZED'"
-            type="primary"
-            link
-            size="small"
             :loading="analyzing"
             @click.stop="handleAnalyze"
             class="analyze-btn"
@@ -147,7 +140,7 @@ const parsedContent = computed(() => {
   return escaped.replace(/#([^\s#]{2,})/g, '<span class="hashtag-link" data-tag="$1">#$1</span>')
 })
 
-const handleContentClick = async (event) => {
+const handleContentClick = async event => {
   const target = event.target
   if (target.classList.contains('hashtag-link')) {
     event.stopPropagation()
@@ -163,25 +156,23 @@ const handleContentClick = async (event) => {
   }
 }
 
-const handleCommand = (command) => {
+const handleCommand = command => {
   if (command === 'edit') {
     openEditDialog()
   } else if (command === 'delete') {
-    ElMessageBox.confirm(
-      '此操作将永久删除该帖子，是否继续？',
-      '删除确认',
-      {
-        confirmButtonText: '确认删除',
-        cancelButtonText: '取消',
-        type: 'warning',
-        center: true,
-        confirmButtonClass: 'el-button--danger',
-        draggable: true
-      }
-    ).then(() => {
-      emit('delete', props.post.postId)
-      ElMessage.success('删除成功')
-    }).catch(() => {})
+    ElMessageBox.confirm('此操作将永久删除该帖子，是否继续？', '删除确认', {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      center: true,
+      confirmButtonClass: 'el-button--danger',
+      draggable: true
+    })
+      .then(() => {
+        emit('delete', props.post.postId)
+        ElMessage.success('删除成功')
+      })
+      .catch(() => {})
   }
 }
 
@@ -215,7 +206,7 @@ const submitEdit = async () => {
   }
 }
 
-const formatDate = (date) => {
+const formatDate = date => {
   if (!date) return ''
   return new Date(date).toLocaleString('zh-CN', {
     year: 'numeric',
@@ -226,7 +217,7 @@ const formatDate = (date) => {
   })
 }
 
-const getSentimentClass = (sentiment) => {
+const getSentimentClass = sentiment => {
   const classes = {
     POSITIVE: 'positive',
     NEUTRAL: 'neutral',
@@ -236,7 +227,7 @@ const getSentimentClass = (sentiment) => {
   return classes[sentiment] || 'neutral'
 }
 
-const getSentimentText = (sentiment) => {
+const getSentimentText = sentiment => {
   const texts = {
     POSITIVE: '正面',
     NEUTRAL: '中立',
@@ -287,13 +278,13 @@ const pollForResult = async () => {
   padding: 24px;
   margin-bottom: 20px;
   transition: all 0.3s ease;
-  border: 1px solid rgba(0,0,0,0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .post-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.04);
-  border-color: rgba(0,0,0,0);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0);
 }
 
 .post-header {
@@ -463,8 +454,24 @@ const pollForResult = async () => {
 }
 
 .analyze-btn {
-  font-weight: 500;
-  color: #4f46e5;
+  font-size: 13px;
+  font-weight: 600;
+  height: 32px;
+  padding: 0 16px;
+  background-color: #ffffff;
+  border: 1px solid #e4e4e7;
+  color: #18181b;
+  border-radius: 16px;
+  transition: all 0.2s;
+  margin-left: 4px;
+}
+
+.analyze-btn:hover,
+.analyze-btn:focus {
+  background-color: #f4f4f5;
+  border-color: #18181b;
+  color: #18181b;
+  transform: translateY(-1px);
 }
 
 .comment-count {

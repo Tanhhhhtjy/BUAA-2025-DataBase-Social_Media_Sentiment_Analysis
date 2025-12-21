@@ -21,29 +21,32 @@
           size="large"
           class="register-form"
         >
-          <el-form-item label="用户名" prop="username">
+          <el-form-item label="用户名" prop="username" :error="usernameError">
             <el-input
               v-model="registerForm.username"
               placeholder="3-50个字符，只能包含字母、数字、下划线"
               :prefix-icon="User"
+              @input="usernameError = ''"
             />
           </el-form-item>
 
-          <el-form-item label="邮箱" prop="email">
+          <el-form-item label="邮箱" prop="email" :error="emailError">
             <el-input
               v-model="registerForm.email"
               placeholder="请输入邮箱地址"
               :prefix-icon="Message"
+              @input="emailError = ''"
             />
           </el-form-item>
 
-          <el-form-item label="密码" prop="password">
+          <el-form-item label="密码" prop="password" :error="passwordError">
             <el-input
               v-model="registerForm.password"
               type="password"
               placeholder="至少8位，包含字母和数字"
               :prefix-icon="Lock"
               show-password
+              @input="passwordError = ''"
             />
           </el-form-item>
 
@@ -58,21 +61,14 @@
           </el-form-item>
 
           <div class="form-actions">
-            <el-button
-              type="primary"
-              @click="handleRegister"
-              :loading="loading"
-              class="submit-btn"
-            >
+            <el-button type="primary" @click="handleRegister" :loading="loading" class="submit-btn">
               立即注册
             </el-button>
           </div>
 
           <div class="form-footer">
             <span class="has-account">已有账号？</span>
-            <el-button type="primary" link @click="$router.push('/login')">
-              返回登录
-            </el-button>
+            <el-button type="primary" @click="$router.push('/login')"> 返回登录 </el-button>
           </div>
         </el-form>
       </div>
@@ -92,6 +88,9 @@ const authStore = useAuthStore()
 
 const registerFormRef = ref()
 const loading = ref(false)
+const usernameError = ref('')
+const emailError = ref('')
+const passwordError = ref('')
 
 const registerForm = reactive({
   username: '',
@@ -121,7 +120,11 @@ const registerRules = {
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 8, message: '密码长度不能少于8位', trigger: 'blur' },
-    { pattern: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]+$/, message: '密码必须包含字母和数字', trigger: 'blur' }
+    {
+      pattern: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]+$/,
+      message: '密码必须包含字母和数字',
+      trigger: 'blur'
+    }
   ],
   confirmPassword: [
     { required: true, message: '请确认密码', trigger: 'blur' },
@@ -132,7 +135,12 @@ const registerRules = {
 const handleRegister = async () => {
   if (!registerFormRef.value) return
 
-  await registerFormRef.value.validate(async (valid) => {
+  // Clear previous errors
+  usernameError.value = ''
+  emailError.value = ''
+  passwordError.value = ''
+
+  await registerFormRef.value.validate(async valid => {
     if (valid) {
       loading.value = true
       try {
@@ -145,7 +153,26 @@ const handleRegister = async () => {
           ElMessage.success('注册成功')
           router.push('/')
         } else {
-          ElMessage.error(result.message || '注册失败')
+          // Determine where to show the error
+          const msg = result.message || '注册失败'
+          if (
+            msg.includes('用户') ||
+            msg.includes('账号') ||
+            msg.toLowerCase().includes('user') ||
+            msg.toLowerCase().includes('account')
+          ) {
+            usernameError.value = msg
+          } else if (
+            msg.includes('邮箱') ||
+            msg.includes('email') ||
+            msg.toLowerCase().includes('mail')
+          ) {
+            emailError.value = msg
+          } else if (msg.includes('密码') || msg.toLowerCase().includes('password')) {
+            passwordError.value = msg
+          } else {
+            ElMessage.error(msg)
+          }
         }
       } catch (error) {
         ElMessage.error(error.message || '注册失败')
@@ -189,8 +216,12 @@ const handleRegister = async () => {
 }
 
 @keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .brand-content {
@@ -282,17 +313,36 @@ const handleRegister = async () => {
 }
 
 .form-footer {
-  margin-top: 24px;
+  margin-top: 32px;
   text-align: center;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .has-account {
   color: #71717a;
-  font-size: 14px;
+  font-size: 15px;
+}
+
+.form-footer :deep(.el-button) {
+  font-size: 15px;
+  font-weight: 600;
+  height: 40px;
+  padding: 0 24px;
+  background-color: #18181b;
+  border-color: #18181b;
+  color: white;
+  border-radius: 20px;
+  margin-left: 6px;
+  transition: all 0.2s;
+}
+
+.form-footer :deep(.el-button:hover) {
+  background-color: #27272a;
+  border-color: #27272a;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 900px) {

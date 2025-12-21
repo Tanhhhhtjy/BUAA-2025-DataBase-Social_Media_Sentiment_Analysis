@@ -1,6 +1,7 @@
 package com.socialmedia.sentiment.service;
 
 import com.socialmedia.sentiment.entity.Keyword;
+import com.socialmedia.sentiment.mapper.AlertMapper;
 import com.socialmedia.sentiment.mapper.KeywordMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,10 +13,12 @@ import java.util.List;
 public class KeywordService {
 
     private final KeywordMapper keywordMapper;
+    private final AlertMapper alertMapper;
 
     @Autowired
-    public KeywordService(KeywordMapper keywordMapper) {
+    public KeywordService(KeywordMapper keywordMapper, AlertMapper alertMapper) {
         this.keywordMapper = keywordMapper;
+        this.alertMapper = alertMapper;
     }
 
     public Keyword findById(Long keywordId) {
@@ -69,6 +72,10 @@ public class KeywordService {
     @Transactional
     public void delete(Long keywordId) {
         findById(keywordId); // 验证存在
+
+        // 删除关联的预警
+        alertMapper.deleteByKeywordId(keywordId);
+
         keywordMapper.deleteById(keywordId);
     }
 

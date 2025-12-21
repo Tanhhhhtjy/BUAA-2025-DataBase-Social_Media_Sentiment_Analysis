@@ -8,12 +8,7 @@
       </el-button>
     </div>
 
-    <el-table
-      v-loading="loading"
-      :data="keywords"
-      stripe
-      style="width: 100%"
-    >
+    <el-table v-loading="loading" :data="keywords" stripe style="width: 100%">
       <el-table-column prop="keywordId" label="ID" width="80" />
       <el-table-column prop="keyword" label="关键词" width="200" />
       <el-table-column prop="category" label="类别" width="150">
@@ -29,12 +24,8 @@
       </el-table-column>
       <el-table-column label="操作" fixed="right" width="150">
         <template #default="{ row }">
-          <el-button type="primary" size="small" @click="showEditDialog(row)">
-            编辑
-          </el-button>
-          <el-button type="danger" size="small" @click="handleDelete(row)">
-            删除
-          </el-button>
+          <el-button type="primary" size="small" @click="showEditDialog(row)"> 编辑 </el-button>
+          <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -67,25 +58,33 @@
             <el-option label="色情低俗" value="色情低俗" />
             <el-option label="暴力恐怖" value="暴力恐怖" />
             <el-option label="违法犯罪" value="违法犯罪" />
-            <el-option label="其他" value="其他" />
+            <el-option label="其他（自定义）" :value="CUSTOM_CATEGORY_VALUE" />
           </el-select>
+          <el-input
+            v-if="form.category === CUSTOM_CATEGORY_VALUE"
+            v-model="customCategory"
+            placeholder="请输入自定义类别"
+            style="margin-top: 8px"
+            clearable
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          确定
-        </el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting"> 确定 </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { adminAPI } from '../../api/admin'
+
+const CUSTOM_CATEGORY_VALUE = '__CUSTOM__'
+const predefinedCategories = ['政治敏感', '色情低俗', '暴力恐怖', '违法犯罪']
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -96,10 +95,18 @@ const pageSize = ref(10)
 
 const dialogVisible = ref(false)
 const editingKeyword = ref(null)
+const customCategory = ref('')
 const form = ref({
   keyword: '',
   category: ''
 })
+
+const toFormCategoryState = category => {
+  const trimmed = (category || '').trim()
+  if (!trimmed) return { select: '', custom: '' }
+  if (predefinedCategories.includes(trimmed)) return { select: trimmed, custom: '' }
+  return { select: CUSTOM_CATEGORY_VALUE, custom: trimmed }
+}
 
 const fetchKeywords = async () => {
   loading.value = true
@@ -117,12 +124,12 @@ const fetchKeywords = async () => {
   }
 }
 
-const handlePageChange = (page) => {
+const handlePageChange = page => {
   currentPage.value = page
   fetchKeywords()
 }
 
-const handleSizeChange = (size) => {
+const handleSizeChange = size => {
   pageSize.value = size
   currentPage.value = 1
   fetchKeywords()
@@ -130,16 +137,20 @@ const handleSizeChange = (size) => {
 
 const showAddDialog = () => {
   editingKeyword.value = null
-  form.value = { keyword: '', category: '' }
+  const { select, custom } = toFormCategoryState('')
+  form.value = { keyword: '', category: select }
+  customCategory.value = custom
   dialogVisible.value = true
 }
 
-const showEditDialog = (keyword) => {
+const showEditDialog = keyword => {
   editingKeyword.value = keyword
+  const { select, custom } = toFormCategoryState(keyword.category)
   form.value = {
     keyword: keyword.keyword,
-    category: keyword.category || ''
+    category: select
   }
+  customCategory.value = custom
   dialogVisible.value = true
 }
 
@@ -149,13 +160,25 @@ const handleSubmit = async () => {
     return
   }
 
+  if (form.value.category === CUSTOM_CATEGORY_VALUE && !customCategory.value.trim()) {
+    ElMessage.warning('请输入自定义类别')
+    return
+  }
+
   submitting.value = true
   try {
+    const payload = {
+      keyword: form.value.keyword.trim(),
+      category:
+        form.value.category === CUSTOM_CATEGORY_VALUE
+          ? customCategory.value.trim()
+          : form.value.category
+    }
     if (editingKeyword.value) {
-      await adminAPI.updateKeyword(editingKeyword.value.keywordId, form.value)
+      await adminAPI.updateKeyword(editingKeyword.value.keywordId, payload)
       ElMessage.success('关键词已更新')
     } else {
-      await adminAPI.addKeyword(form.value)
+      await adminAPI.addKeyword(payload)
       ElMessage.success('关键词已添加')
     }
     dialogVisible.value = false
@@ -167,13 +190,18 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = async (keyword) => {
+watch(
+  () => form.value.category,
+  category => {
+    if (category !== CUSTOM_CATEGORY_VALUE) customCategory.value = ''
+  }
+)
+
+const handleDelete = async keyword => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除关键词 "${keyword.keyword}" 吗？`,
-      '确认删除',
-      { type: 'warning' }
-    )
+    await ElMessageBox.confirm(`确定要删除关键词 "${keyword.keyword}" 吗？`, '确认删除', {
+      type: 'warning'
+    })
     await adminAPI.deleteKeyword(keyword.keywordId)
     ElMessage.success('关键词已删除')
     fetchKeywords()
@@ -184,7 +212,7 @@ const handleDelete = async (keyword) => {
   }
 }
 
-const formatDate = (dateStr) => {
+const formatDate = dateStr => {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleString('zh-CN')
 }

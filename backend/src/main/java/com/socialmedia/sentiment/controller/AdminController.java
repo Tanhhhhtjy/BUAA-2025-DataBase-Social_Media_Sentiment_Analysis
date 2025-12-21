@@ -204,11 +204,11 @@ public class AdminController {
 
     @PutMapping("/alerts/{alertId}/handle")
     public ResponseEntity<Map<String, Object>> handleAlert(@PathVariable Long alertId) {
-        alertService.markAsHandled(alertId);
+        alertService.toggleStatus(alertId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("message", "预警已标记为已处理");
+        response.put("message", "预警状态已更新");
         response.put("alertId", alertId);
 
         return ResponseEntity.ok(response);
@@ -222,6 +222,17 @@ public class AdminController {
         response.put("success", true);
         response.put("message", "预警已删除");
         response.put("alertId", alertId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/alerts/scan")
+    public ResponseEntity<Map<String, Object>> scanAllPosts() {
+        alertService.scanAllPosts();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "全量扫描已完成");
 
         return ResponseEntity.ok(response);
     }

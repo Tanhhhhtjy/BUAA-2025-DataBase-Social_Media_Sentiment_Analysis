@@ -87,6 +87,11 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
+  // Validate token existence and expiration
+  if (authStore.token) {
+    authStore.checkToken()
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
   } else if (to.meta.requiresAdmin && authStore.user?.role !== 'ADMIN') {

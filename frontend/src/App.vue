@@ -4,12 +4,7 @@
       <el-header>
         <div class="header-content">
           <h1>社交媒体舆情分析系统</h1>
-          <el-menu
-            mode="horizontal"
-            :router="true"
-            :default-active="activeMenu"
-            class="main-menu"
-          >
+          <el-menu mode="horizontal" :router="true" :default-active="activeMenu" class="main-menu">
             <el-menu-item index="/">首页</el-menu-item>
             <el-menu-item index="/posts">帖子列表</el-menu-item>
             <el-menu-item index="/hashtags">话题列表</el-menu-item>
@@ -87,7 +82,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 const username = computed(() => authStore.user?.username)
 const isAdmin = computed(() => authStore.user?.role === 'ADMIN')
 
-const handleCommand = (command) => {
+const handleCommand = command => {
   switch (command) {
     case 'profile':
       router.push('/profile')
@@ -119,7 +114,7 @@ const handleCommand = (command) => {
   --el-color-primary-light-8: #d4d4d8;
   --el-color-primary-light-9: #f4f4f5;
   --el-color-primary-dark-2: #09090b;
-  
+
   --app-bg-color: #f8fafc; /* 极淡的灰蓝色背景 */
   --app-text-primary: #1e293b;
   --app-text-secondary: #64748b;
@@ -133,7 +128,15 @@ const handleCommand = (command) => {
 }
 
 #app {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--app-text-primary);
@@ -150,7 +153,7 @@ const handleCommand = (command) => {
   backdrop-filter: blur(10px);
   color: var(--app-text-primary);
   box-shadow: none !important;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -198,20 +201,6 @@ const handleCommand = (command) => {
   color: var(--app-accent-color) !important;
   background-color: transparent !important;
   font-weight: 600;
-  position: relative;
-}
-
-/* 激活时的小圆点指示器，替代下划线 */
-.el-menu-item.is-active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: var(--app-accent-color);
 }
 
 .auth-buttons {
@@ -233,12 +222,12 @@ const handleCommand = (command) => {
   font-weight: 600;
   transition: all 0.2s;
   border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .user-avatar:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .el-dropdown-menu .el-dropdown-item {

@@ -21,40 +21,35 @@
           size="large"
           class="login-form"
         >
-          <el-form-item label="账号" prop="usernameOrEmail">
+          <el-form-item label="账号" prop="usernameOrEmail" :error="usernameError">
             <el-input
               v-model="loginForm.usernameOrEmail"
               placeholder="请输入用户名或邮箱"
               :prefix-icon="User"
+              @input="usernameError = ''"
             />
           </el-form-item>
 
-          <el-form-item label="密码" prop="password">
+          <el-form-item label="密码" prop="password" :error="passwordError">
             <el-input
               v-model="loginForm.password"
               type="password"
               placeholder="请输入密码"
               :prefix-icon="Lock"
               show-password
+              @input="passwordError = ''"
             />
           </el-form-item>
 
           <div class="form-actions">
-            <el-button
-              type="primary"
-              @click="handleLogin"
-              :loading="loading"
-              class="submit-btn"
-            >
+            <el-button type="primary" @click="handleLogin" :loading="loading" class="submit-btn">
               登 录
             </el-button>
           </div>
 
           <div class="form-footer">
             <span class="no-account">还没有账号？</span>
-            <el-button type="primary" link @click="$router.push('/register')">
-              立即注册
-            </el-button>
+            <el-button type="primary" @click="$router.push('/register')"> 立即注册 </el-button>
           </div>
         </el-form>
       </div>
@@ -74,6 +69,8 @@ const authStore = useAuthStore()
 
 const loginFormRef = ref()
 const loading = ref(false)
+const usernameError = ref('')
+const passwordError = ref('')
 
 const loginForm = reactive({
   usernameOrEmail: '',
@@ -81,9 +78,7 @@ const loginForm = reactive({
 })
 
 const loginRules = {
-  usernameOrEmail: [
-    { required: true, message: '请输入用户名或邮箱', trigger: 'blur' }
-  ],
+  usernameOrEmail: [{ required: true, message: '请输入用户名或邮箱', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 8, message: '密码长度不能少于8位', trigger: 'blur' }
@@ -93,7 +88,11 @@ const loginRules = {
 const handleLogin = async () => {
   if (!loginFormRef.value) return
 
-  await loginFormRef.value.validate(async (valid) => {
+  // Clear previous errors
+  usernameError.value = ''
+  passwordError.value = ''
+
+  await loginFormRef.value.validate(async valid => {
     if (valid) {
       loading.value = true
       try {
@@ -102,7 +101,21 @@ const handleLogin = async () => {
           ElMessage.success('登录成功')
           router.push('/')
         } else {
-          ElMessage.error(result.message || '登录失败')
+          // Determine where to show the error
+          const msg = result.message || '登录失败'
+          if (
+            msg.includes('用户') ||
+            msg.includes('账号') ||
+            msg.toLowerCase().includes('user') ||
+            msg.toLowerCase().includes('account')
+          ) {
+            usernameError.value = msg
+          } else if (msg.includes('密码') || msg.toLowerCase().includes('password')) {
+            passwordError.value = msg
+          } else {
+            // Generic error, show toast
+            ElMessage.error(msg)
+          }
         }
       } catch (error) {
         ElMessage.error(error.message || '登录失败')
@@ -147,8 +160,12 @@ const handleLogin = async () => {
 }
 
 @keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .brand-content {
@@ -240,17 +257,36 @@ const handleLogin = async () => {
 }
 
 .form-footer {
-  margin-top: 24px;
+  margin-top: 32px;
   text-align: center;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .no-account {
   color: #71717a;
-  font-size: 14px;
+  font-size: 15px;
+}
+
+.form-footer :deep(.el-button) {
+  font-size: 15px;
+  font-weight: 600;
+  height: 40px;
+  padding: 0 24px;
+  background-color: #18181b;
+  border-color: #18181b;
+  color: white;
+  border-radius: 20px;
+  margin-left: 6px;
+  transition: all 0.2s;
+}
+
+.form-footer :deep(.el-button:hover) {
+  background-color: #27272a;
+  border-color: #27272a;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 900px) {
