@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -37,10 +38,16 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/health/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-                .requestMatchers("/posts/**").authenticated()
-                .requestMatchers("/comments/**").authenticated()
-                .requestMatchers("/hashtags/**").authenticated()
-                .requestMatchers("/analytics/**").authenticated()
+                // Allow GET requests for posts, hashtags, and analytics (read operations)
+                .requestMatchers(HttpMethod.GET, "/posts/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/hashtags/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/analytics/**").permitAll()
+                // Require authentication for write operations
+                .requestMatchers(HttpMethod.POST, "/posts/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/posts/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/posts/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/comments/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/comments/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
