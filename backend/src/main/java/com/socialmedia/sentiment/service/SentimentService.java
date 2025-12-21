@@ -2,6 +2,8 @@ package com.socialmedia.sentiment.service;
 
 import com.socialmedia.sentiment.entity.PostSentiment;
 import com.socialmedia.sentiment.mapper.SentimentMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,8 @@ import java.util.regex.Pattern;
 @Service
 public class SentimentService {
 
+    private static final Logger logger = LoggerFactory.getLogger(SentimentService.class);
+
     private final OpenAiChatModel chatModel;
     private final SentimentMapper sentimentMapper;
 
@@ -27,18 +31,23 @@ public class SentimentService {
     @Transactional
     public void analyzeSentiment(Long postId, String content) {
         try {
+            logger.info("开始分析帖子情感, postId: {}", postId);
             String prompt = buildSentimentPrompt(content);
             String response = chatModel.call(prompt);
+            logger.info("AI 响应: {}", response);
 
             SentimentResult result = parseSentimentResult(response);
+            logger.info("解析结果: sentiment={}, confidence={}", result.sentiment, result.confidence);
 
-            sentimentMapper.updateSentiment(
+            sentimentMapper.insertOrUpdate(
                 postId,
                 result.sentiment,
                 BigDecimal.valueOf(result.confidence)
             );
+            logger.info("情感分析完成, postId: {}", postId);
         } catch (Exception e) {
-            sentimentMapper.updateSentiment(
+            logger.error("情感分析失败, postId: {}, error: {}", postId, e.getMessage(), e);
+            sentimentMapper.insertOrUpdate(
                 postId,
                 "UNANALYZED",
                 null
@@ -47,8 +56,14 @@ public class SentimentService {
     }
 
     public void triggerAsyncAnalysis(Long postId, String content) {
+        logger.info("触发异步情感分析, postId: {}", postId);
         new Thread(() -> {
-            analyzeSentiment(postId, content);
+            try {
+                logger.info("异步线程开始执行, postId: {}", postId);
+                analyzeSentiment(postId, content);
+            } catch (Exception e) {
+                logger.error("异步线程异常, postId: {}, error: {}", postId, e.getMessage(), e);
+            }
         }).start();
     }
 

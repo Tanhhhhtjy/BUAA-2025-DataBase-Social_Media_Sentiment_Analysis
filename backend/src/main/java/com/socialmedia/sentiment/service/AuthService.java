@@ -1,5 +1,6 @@
 package com.socialmedia.sentiment.service;
 
+import com.socialmedia.sentiment.dto.request.ChangePasswordRequest;
 import com.socialmedia.sentiment.dto.request.LoginRequest;
 import com.socialmedia.sentiment.dto.request.RegisterRequest;
 import com.socialmedia.sentiment.dto.response.AuthResponse;
@@ -34,7 +35,8 @@ public class AuthService {
                 user.getUserId(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getRole()
+                user.getRole(),
+                user.getCreatedAt()
         );
     }
 
@@ -60,7 +62,8 @@ public class AuthService {
                 user.getUserId(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getRole()
+                user.getRole(),
+                user.getCreatedAt()
         );
     }
 
@@ -78,5 +81,19 @@ public class AuthService {
 
     public String getRoleFromToken(String token) {
         return jwtUtil.getRoleFromToken(token);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userService.findById(userId);
+        if (user == null) {
+            throw new UsernameNotFoundException("用户不存在");
+        }
+
+        if (!userService.validatePassword(user, request.getCurrentPassword())) {
+            throw new BadCredentialsException("当前密码错误");
+        }
+
+        userService.updatePassword(userId, request.getNewPassword());
     }
 }

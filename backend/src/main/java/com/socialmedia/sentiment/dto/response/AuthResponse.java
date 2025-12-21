@@ -1,5 +1,7 @@
 package com.socialmedia.sentiment.dto.response;
 
+import java.time.LocalDateTime;
+
 public class AuthResponse {
 
     private String token;
@@ -8,15 +10,17 @@ public class AuthResponse {
     private String username;
     private String email;
     private String role;
+    private LocalDateTime createdAt;
 
     public AuthResponse() {}
 
-    public AuthResponse(String token, Long userId, String username, String email, String role) {
+    public AuthResponse(String token, Long userId, String username, String email, String role, LocalDateTime createdAt) {
         this.token = token;
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.role = role;
+        this.createdAt = createdAt;
     }
 
     public String getToken() {
@@ -65,5 +69,13 @@ public class AuthResponse {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

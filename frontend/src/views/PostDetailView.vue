@@ -1,92 +1,71 @@
 <template>
   <div class="post-detail-view" v-loading="loading">
-    <el-card v-if="post">
-      <div class="post-header">
-        <div class="user-info">
-          <el-avatar :size="50">{{ post.username?.[0]?.toUpperCase() }}</el-avatar>
-          <div class="user-details">
-            <h3>{{ post.username }}</h3>
-            <span class="timestamp">{{ formatDate(post.createdAt) }}</span>
-          </div>
-        </div>
+    <div v-if="post" class="post-wrapper">
+      <PostCard
+        :post="post"
+        @delete="handleDeletePost"
+        @update="handleUpdatePost"
+      />
+    </div>
+
+    <div class="comments-section" v-if="post">
+      <div class="section-header">
+        <h3>全部评论 ({{ commentCount }})</h3>
       </div>
 
-      <div class="post-content">
-        <p>{{ post.content }}</p>
-      </div>
-
-      <div class="post-footer">
-        <div class="hashtags" v-if="post.hashtags && post.hashtags.length > 0">
-          <el-tag
-            v-for="tag in post.hashtags"
-            :key="tag"
-            type="info"
-            size="small"
-            class="hashtag-tag"
-          >
-            #{{ tag }}
-          </el-tag>
-        </div>
-        <div class="post-stats">
-          <el-tag :type="getSentimentType(post.sentiment)" size="large">
-            {{ getSentimentText(post.sentiment) }}
-            <span v-if="post.confidence"> ({{ (post.confidence * 100).toFixed(1) }}%)</span>
-          </el-tag>
-        </div>
-      </div>
-    </el-card>
-
-    <el-card class="comments-section" v-if="post">
-      <template #header>
-        <h3>评论 ({{ commentCount }})</h3>
-      </template>
-
-      <div class="comment-form">
+      <div class="comment-form-wrapper">
         <el-input
           v-model="newComment"
           type="textarea"
           :rows="3"
-          placeholder="写下你的评论..."
+          placeholder="发表你的看法..."
           maxlength="500"
           show-word-limit
+          class="custom-textarea"
         />
         <div class="comment-actions">
-          <el-button type="primary" @click="handleAddComment" :loading="commentLoading">
-            发表评论
+          <el-button type="primary" @click="handleAddComment" :loading="commentLoading" round>
+            发布评论
           </el-button>
         </div>
       </div>
 
       <div class="comments-list" v-loading="commentLoading">
-        <div v-if="comments.length > 0">
+        <template v-if="comments.length > 0">
           <div
             v-for="comment in comments"
             :key="comment.commentId"
             class="comment-item"
           >
-            <div class="comment-header">
-              <el-avatar :size="32">{{ comment.username?.[0]?.toUpperCase() }}</el-avatar>
-              <span class="comment-username">{{ comment.username }}</span>
-              <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
+            <div class="comment-avatar">
+              <el-avatar :size="40" class="custom-avatar">{{ comment.username?.[0]?.toUpperCase() }}</el-avatar>
             </div>
-            <div class="comment-content">
-              {{ comment.content }}
+            <div class="comment-body">
+              <div class="comment-meta">
+                <span class="comment-username">{{ comment.username }}</span>
+                <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
+              </div>
+              <div class="comment-content">
+                {{ comment.content }}
+              </div>
             </div>
           </div>
-        </div>
-        <el-empty v-else description="暂无评论，来发表第一条评论吧！" />
+        </template>
+        <el-empty v-else description="暂无评论，快来抢沙发！" />
       </div>
-    </el-card>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { postsAPI } from '../api/posts'
 import { ElMessage } from 'element-plus'
+import PostCard from '../components/PostCard.vue'
 
 const route = useRoute()
+const router = useRouter()
 
 const loading = ref(false)
 const commentLoading = ref(false)
@@ -131,6 +110,8 @@ const handleAddComment = async () => {
     newComment.value = ''
     ElMessage.success('评论成功')
     fetchComments()
+    // 也可以选择重新获取帖子以更新评论数，虽然 PostCard 可能不会自动刷新数字
+    // fetchPost() 
   } catch (error) {
     ElMessage.error(error.message || '评论失败')
   } finally {
@@ -138,29 +119,29 @@ const handleAddComment = async () => {
   }
 }
 
+const handleDeletePost = async () => {
+  // 如果在详情页删除了帖子，应该跳回列表页
+  try {
+    await postsAPI.deletePost(post.value.postId)
+    ElMessage.success('删除成功')
+    router.push('/posts')
+  } catch (error) {
+    ElMessage.error(error.message || '删除失败')
+  }
+}
+
+const handleUpdatePost = (updatedPost) => {
+  post.value = updatedPost
+}
+
 const formatDate = (date) => {
   if (!date) return ''
-  return new Date(date).toLocaleString('zh-CN')
-}
-
-const getSentimentType = (sentiment) => {
-  const types = {
-    POSITIVE: 'success',
-    NEUTRAL: 'info',
-    NEGATIVE: 'danger',
-    UNANALYZED: 'warning'
-  }
-  return types[sentiment] || 'info'
-}
-
-const getSentimentText = (sentiment) => {
-  const texts = {
-    POSITIVE: '正面',
-    NEUTRAL: '中立',
-    NEGATIVE: '负面',
-    UNANALYZED: '未分析'
-  }
-  return texts[sentiment] || '未知'
+  return new Date(date).toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 onMounted(() => {
@@ -171,100 +152,105 @@ onMounted(() => {
 
 <style scoped>
 .post-detail-view {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
+  padding: 20px 0;
 }
 
-.post-header {
-  margin-bottom: 20px;
+.post-wrapper {
+  margin-bottom: 32px;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.user-details h3 {
-  margin: 0;
-  color: #303133;
-}
-
-.timestamp {
-  font-size: 14px;
-  color: #909399;
-}
-
-.post-content {
-  margin: 20px 0;
-  font-size: 16px;
-  line-height: 1.8;
-  color: #303133;
-}
-
-.post-footer {
-  border-top: 1px solid #ebeef5;
-  padding-top: 16px;
-}
-
-.hashtags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.hashtag-tag {
-  cursor: pointer;
-}
-
+/* Comments Section */
 .comments-section {
-  margin-top: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 }
 
-.comment-form {
+.section-header {
   margin-bottom: 24px;
+  padding-left: 8px;
+  border-left: 4px solid #18181b;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #18181b;
+}
+
+.comment-form-wrapper {
+  margin-bottom: 40px;
+}
+
+:deep(.custom-textarea .el-textarea__inner) {
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  border-color: transparent;
+  font-size: 15px;
+  transition: all 0.2s;
+  box-shadow: none;
+}
+
+:deep(.custom-textarea .el-textarea__inner:focus) {
+  background-color: #ffffff;
+  border-color: #18181b;
+  box-shadow: 0 0 0 1px #18181b;
 }
 
 .comment-actions {
   margin-top: 12px;
-  text-align: right;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.comments-list {
-  min-height: 200px;
-}
-
+/* Comment List */
 .comment-item {
-  padding: 16px 0;
-  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  gap: 16px;
+  padding: 24px 0;
+  border-bottom: 1px solid #f4f4f5;
 }
 
 .comment-item:last-child {
   border-bottom: none;
 }
 
-.comment-header {
+.custom-avatar {
+  background-color: #f4f4f5;
+  color: #18181b;
+  font-weight: 700;
+}
+
+.comment-body {
+  flex: 1;
+}
+
+.comment-meta {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
   margin-bottom: 8px;
 }
 
 .comment-username {
-  font-weight: 600;
-  color: #303133;
+  font-weight: 700;
+  color: #18181b;
+  font-size: 15px;
 }
 
 .comment-time {
-  font-size: 12px;
-  color: #909399;
-  margin-left: auto;
+  font-size: 13px;
+  color: #a1a1aa;
 }
 
 .comment-content {
-  padding-left: 40px;
-  color: #606266;
+  color: #3f3f46;
   line-height: 1.6;
+  font-size: 15px;
 }
 </style>

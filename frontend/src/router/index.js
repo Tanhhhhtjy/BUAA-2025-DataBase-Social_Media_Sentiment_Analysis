@@ -52,6 +52,30 @@ const routes = [
     name: 'Admin',
     component: () => import('../views/admin/AdminView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/ProfileView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/my-posts',
+    name: 'MyPosts',
+    component: () => import('../views/MyPostsView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/my-comments',
+    name: 'MyComments',
+    component: () => import('../views/MyCommentsView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: () => import('../views/SettingsView.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

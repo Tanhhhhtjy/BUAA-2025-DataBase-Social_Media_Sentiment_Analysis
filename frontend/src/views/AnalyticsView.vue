@@ -1,77 +1,109 @@
 <template>
   <div class="analytics-view">
     <div class="page-header">
-      <h2>数据分析</h2>
-      <div class="date-range-picker">
+      <div class="header-left">
+        <h2>数据洞察</h2>
+        <p class="subtitle">实时监控舆情趋势与情感分布</p>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <div class="date-controls">
         <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
+          v-model="startDate"
+          type="date"
+          placeholder="开始日期"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
-          @change="handleDateRangeChange"
+          @change="handleDateChange"
+          class="custom-date-picker"
         />
-        <el-button type="primary" @click="refreshData" :loading="loading">
-          刷新数据
+        <span class="date-separator">-</span>
+        <el-date-picker
+          v-model="endDate"
+          type="date"
+          placeholder="结束日期"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          @change="handleDateChange"
+          class="custom-date-picker"
+        />
+        <el-button type="primary" @click="refreshData" :loading="loading" round>
+          刷新
         </el-button>
       </div>
     </div>
 
-    <el-row :gutter="20">
+    <!-- 核心指标卡片 -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-icon bg-blue">
+          <el-icon><Document /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">总帖子数</div>
+          <div class="stat-value">{{ stats.totalPosts }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-green">
+          <el-icon><SuccessFilled /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">正面情感</div>
+          <div class="stat-value positive">{{ stats.positivePosts }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-gray">
+          <el-icon><Minus /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">中立情感</div>
+          <div class="stat-value neutral">{{ stats.neutralPosts }}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-red">
+          <el-icon><CircleCloseFilled /></el-icon>
+        </div>
+        <div class="stat-info">
+          <div class="stat-label">负面情感</div>
+          <div class="stat-value negative">{{ stats.negativePosts }}</div>
+        </div>
+      </div>
+    </div>
+
+    <el-row :gutter="24">
       <el-col :span="12">
-        <el-card v-loading="loading">
-          <template #header>
-            <span>情感分布统计</span>
-          </template>
-          <SentimentPieChart :data="pieChartData" :height="300" />
-        </el-card>
+        <div class="chart-panel" v-loading="loading">
+          <div class="panel-header">
+            <h3>情感分布</h3>
+          </div>
+          <SentimentPieChart :data="pieChartData" :height="320" />
+        </div>
       </el-col>
       <el-col :span="12">
-        <el-card v-loading="loading">
-          <template #header>
-            <span>热点话题排行</span>
-          </template>
-          <HotTopicsChart :data="hotTopics" :height="300" />
-        </el-card>
+        <div class="chart-panel" v-loading="loading">
+          <div class="panel-header">
+            <h3>热点话题排行</h3>
+          </div>
+          <HotTopicsChart :data="hotTopics" :height="320" />
+        </div>
       </el-col>
     </el-row>
 
-    <el-card class="trend-chart-card" v-loading="loading">
-      <template #header>
-        <span>舆情趋势分析</span>
-      </template>
-      <SentimentTrendChart :data="trendChartData" :height="400" />
-    </el-card>
-
-    <el-row :gutter="20" class="stats-row">
-      <el-col :span="6">
-        <el-statistic title="总帖子数" :value="stats.totalPosts">
-          <template #prefix><el-icon><Document /></el-icon></template>
-        </el-statistic>
-      </el-col>
-      <el-col :span="6">
-        <el-statistic title="正面情感" :value="stats.positivePosts" :value-style="{ color: '#67c23a' }">
-          <template #prefix><el-icon><SuccessFilled /></el-icon></template>
-        </el-statistic>
-      </el-col>
-      <el-col :span="6">
-        <el-statistic title="中立情感" :value="stats.neutralPosts" :value-style="{ color: '#909399' }">
-          <template #prefix><el-icon><Minus /></el-icon></template>
-        </el-statistic>
-      </el-col>
-      <el-col :span="6">
-        <el-statistic title="负面情感" :value="stats.negativePosts" :value-style="{ color: '#f56c6c' }">
-          <template #prefix><el-icon><CircleCloseFilled /></el-icon></template>
-        </el-statistic>
-      </el-col>
-    </el-row>
+    <div class="chart-panel trend-panel" v-loading="loading">
+      <div class="panel-header">
+        <h3>舆情趋势分析</h3>
+      </div>
+      <SentimentTrendChart :data="trendChartData" :height="420" />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAnalyticsStore } from '../stores/analytics'
 import { ElMessage } from 'element-plus'
 import { Document, SuccessFilled, Minus, CircleCloseFilled } from '@element-plus/icons-vue'
@@ -82,7 +114,8 @@ import SentimentTrendChart from '../components/SentimentTrendChart.vue'
 const analyticsStore = useAnalyticsStore()
 
 const loading = computed(() => analyticsStore.loading)
-const dateRange = ref([])
+const startDate = ref(null)
+const endDate = ref(null)
 
 const hotTopics = computed(() => analyticsStore.hotTopics)
 const stats = computed(() => analyticsStore.stats)
@@ -106,9 +139,9 @@ const trendChartData = computed(() => {
   }))
 })
 
-const handleDateRangeChange = (dates) => {
-  if (dates && dates.length === 2) {
-    analyticsStore.setDateRange(dates[0], dates[1])
+const handleDateChange = () => {
+  if (startDate.value && endDate.value) {
+    analyticsStore.setDateRange(startDate.value, endDate.value)
     refreshData()
   }
 }
@@ -131,14 +164,15 @@ const getSentimentText = (sentiment) => {
   return texts[sentiment] || '未知'
 }
 
+// 使用新主题色：Emerald, Slate, Rose
 const getSentimentColor = (sentiment) => {
   const colors = {
-    POSITIVE: '#67c23a',
-    NEUTRAL: '#909399',
-    NEGATIVE: '#f56c6c',
-    UNANALYZED: '#e6a23c'
+    POSITIVE: '#10b981', // Emerald-500
+    NEUTRAL: '#64748b',  // Slate-500
+    NEGATIVE: '#f43f5e', // Rose-500
+    UNANALYZED: '#f59e0b' // Amber-500
   }
-  return colors[sentiment] || '#909399'
+  return colors[sentiment] || '#94a3b8'
 }
 
 const formatDate = (dateStr) => {
@@ -157,39 +191,140 @@ onMounted(() => {
 <style scoped>
 .analytics-view {
   padding: 20px 0;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .page-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.controls-bar {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.header-left h2 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #18181b;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: #71717a;
+  font-size: 16px;
+}
+
+.date-controls {
+  display: flex;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0;
-  color: #303133;
-}
-
-.date-range-picker {
-  display: flex;
   gap: 12px;
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.date-separator {
+  color: #a1a1aa;
+  font-weight: 500;
+}
+
+/* Stats Cards Overview */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
   align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s;
 }
 
-.chart-container {
-  height: 300px;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
-.chart-container-large {
-  height: 400px;
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
 }
 
-.trend-chart-card {
-  margin: 20px 0;
+.bg-blue { background-color: #eff6ff; color: #3b82f6; }
+.bg-green { background-color: #ecfdf5; color: #10b981; }
+.bg-gray { background-color: #f8fafc; color: #64748b; }
+.bg-red { background-color: #fff1f2; color: #f43f5e; }
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
 }
 
-.stats-row {
-  margin-top: 20px;
+.stat-label {
+  font-size: 13px;
+  color: #71717a;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #18181b;
+  line-height: 1;
+}
+
+.stat-value.positive { color: #10b981; }
+.stat-value.neutral { color: #64748b; }
+.stat-value.negative { color: #f43f5e; }
+
+/* Charts */
+.chart-panel {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  margin-bottom: 24px;
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+.trend-panel {
+  margin-bottom: 40px;
+}
+
+.panel-header {
+  margin-bottom: 24px;
+  padding-left: 8px;
+  border-left: 4px solid #18181b;
+}
+
+.panel-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #18181b;
+  margin: 0;
+}
+
+:deep(.el-input__wrapper) {
+  box-shadow: none !important;
+  background-color: #f4f4f5;
 }
 </style>

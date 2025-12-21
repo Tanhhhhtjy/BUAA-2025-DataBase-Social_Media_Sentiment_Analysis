@@ -1,7 +1,9 @@
 package com.socialmedia.sentiment.controller;
 
+import com.socialmedia.sentiment.dto.request.ChangePasswordRequest;
 import com.socialmedia.sentiment.dto.request.LoginRequest;
 import com.socialmedia.sentiment.dto.request.RegisterRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import com.socialmedia.sentiment.dto.response.AuthResponse;
 import com.socialmedia.sentiment.service.AuthService;
 import jakarta.validation.Valid;
@@ -57,6 +59,19 @@ public class AuthController {
             response.put("role", authService.getRoleFromToken(token));
         }
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            HttpServletRequest httpRequest) {
+        Long userId = (Long) httpRequest.getAttribute("userId");
+        authService.changePassword(userId, request);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "密码修改成功");
         return ResponseEntity.ok(response);
     }
 }

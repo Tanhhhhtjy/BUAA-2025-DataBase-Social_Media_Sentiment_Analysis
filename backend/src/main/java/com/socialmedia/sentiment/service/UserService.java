@@ -106,4 +106,11 @@ public class UserService {
     public boolean validatePassword(User user, String rawPassword) {
         return passwordEncoder.matches(rawPassword, user.getPasswordHash());
     }
+
+    @Transactional
+    public void updatePassword(Long userId, String newPassword) {
+        User user = findById(userId);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userMapper.update(user);
+    }
 }

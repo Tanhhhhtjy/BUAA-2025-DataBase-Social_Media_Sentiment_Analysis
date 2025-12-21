@@ -1,74 +1,65 @@
 <template>
   <div class="home-view">
+    <!-- Hero Section: 极简大标题风格 -->
     <div class="hero-section">
-      <h1>欢迎使用社交媒体舆情分析系统</h1>
-      <p>基于大模型的智能情感分析平台</p>
-      <div class="action-buttons">
-        <el-button type="primary" size="large" @click="$router.push('/posts')">
-          浏览帖子
-        </el-button>
-        <el-button size="large" @click="$router.push('/hashtags')">
-          查看话题
-        </el-button>
+      <div class="hero-content">
+        <h1 class="main-title">
+          洞察社交舆情<br>
+          <span class="highlight">掌握未来趋势</span>
+        </h1>
+        <p class="subtitle">基于 AI 大模型的智能情感分析平台，为您提供精准、实时的舆情监控服务。</p>
+        <div class="action-buttons">
+          <el-button type="primary" size="large" class="hero-btn primary" @click="$router.push('/posts')">
+            开始探索
+          </el-button>
+          <el-button size="large" class="hero-btn secondary" @click="$router.push('/hashtags')">
+            热门话题
+          </el-button>
+        </div>
       </div>
     </div>
 
+    <!-- Feature Section: 无边框悬浮卡片 -->
     <div class="features-section">
-      <el-row :gutter="20">
+      <el-row :gutter="40">
         <el-col :span="8">
-          <el-card shadow="hover" class="feature-card">
-            <el-icon size="48" color="#409eff"><ChatSquare /></el-icon>
-            <h3>智能话题提取</h3>
-            <p>自动识别帖子中的 #话题# 标签，快速构建话题网络</p>
-          </el-card>
+          <div class="feature-card">
+            <div class="icon-wrapper">
+              <el-icon :size="32" color="#18181b"><ChatSquare /></el-icon>
+            </div>
+            <h3>智能提取</h3>
+            <p>自动识别帖子中的 #话题# 标签，构建实时关联网络。</p>
+          </div>
         </el-col>
         <el-col :span="8">
-          <el-card shadow="hover" class="feature-card">
-            <el-icon size="48" color="#67c23a"><DataAnalysis /></el-icon>
-            <h3>情感分析</h3>
-            <p>基于大模型技术，准确分析帖子情感倾向</p>
-          </el-card>
+          <div class="feature-card">
+            <div class="icon-wrapper">
+              <el-icon :size="32" color="#18181b"><DataAnalysis /></el-icon>
+            </div>
+            <h3>深度分析</h3>
+            <p>利用先进的大语言模型，精准捕捉文本背后的情感倾向。</p>
+          </div>
         </el-col>
         <el-col :span="8">
-          <el-card shadow="hover" class="feature-card">
-            <el-icon size="48" color="#e6a23c"><TrendCharts /></el-icon>
-            <h3>舆情趋势</h3>
-            <p>实时监控舆情动态，掌握热点话题走向</p>
-          </el-card>
+          <div class="feature-card">
+            <div class="icon-wrapper">
+              <el-icon :size="32" color="#18181b"><TrendCharts /></el-icon>
+            </div>
+            <h3>趋势监控</h3>
+            <p>全天候监控数据波动，第一时间发现潜在的热点与危机。</p>
+          </div>
         </el-col>
       </el-row>
     </div>
 
-    <div class="stats-section" v-if="isAuthenticated">
-      <h2>系统概览</h2>
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-statistic title="总用户数" :value="1234">
-            <template #prefix><el-icon><User /></el-icon></template>
-          </el-statistic>
-        </el-col>
-        <el-col :span="6">
-          <el-statistic title="总帖子数" :value="5678">
-            <template #prefix><el-icon><Document /></el-icon></template>
-          </el-statistic>
-        </el-col>
-        <el-col :span="6">
-          <el-statistic title="总话题数" :value="89">
-            <template #prefix><el-icon><Collection /></el-icon></template>
-          </el-statistic>
-        </el-col>
-        <el-col :span="6">
-          <el-statistic title="今日分析" :value="234">
-            <template #prefix><el-icon><DataAnalysis /></el-icon></template>
-          </el-statistic>
-        </el-col>
-      </el-row>
-    </div>
-
+    <!-- Recent Posts -->
     <div class="recent-posts-section" v-if="isAuthenticated">
       <div class="section-header">
-        <h2>最新帖子</h2>
-        <el-button text @click="$router.push('/posts')">查看更多 →</el-button>
+        <h2>最新动态</h2>
+        <div class="view-all-btn" @click="$router.push('/posts')">
+          查看全部
+          <el-icon><ArrowRight /></el-icon>
+        </div>
       </div>
       <div v-loading="loading">
         <PostCard
@@ -87,7 +78,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { usePostsStore } from '../stores/posts'
-import { ChatSquare, DataAnalysis, TrendCharts, User, Document, Collection } from '@element-plus/icons-vue'
+import { ChatSquare, DataAnalysis, TrendCharts, ArrowRight } from '@element-plus/icons-vue'
 import PostCard from '../components/PostCard.vue'
 
 const authStore = useAuthStore()
@@ -132,80 +123,162 @@ onMounted(() => {
 
 <style scoped>
 .home-view {
-  padding: 20px 0;
+  padding-bottom: 60px;
 }
 
+/* Hero Section */
 .hero-section {
+  padding: 100px 20px 80px;
   text-align: center;
-  padding: 60px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px;
-  margin-bottom: 40px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.hero-section h1 {
-  font-size: 42px;
-  margin-bottom: 16px;
+.main-title {
+  font-size: 56px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #18181b;
+  margin-bottom: 24px;
+  letter-spacing: -1.5px;
 }
 
-.hero-section p {
-  font-size: 18px;
-  margin-bottom: 32px;
-  opacity: 0.9;
+.highlight {
+  background: linear-gradient(120deg, #18181b 0%, #52525b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 20px;
+  color: #71717a;
+  margin-bottom: 48px;
+  line-height: 1.6;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .action-buttons {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   justify-content: center;
 }
 
+.hero-btn {
+  height: 50px;
+  padding: 0 40px;
+  font-size: 16px;
+  border-radius: 25px;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+
+.hero-btn:hover {
+  transform: translateY(-2px);
+}
+
+.hero-btn.secondary {
+  border-color: #e4e4e7;
+  color: #18181b;
+}
+
+.hero-btn.secondary:hover {
+  border-color: #18181b;
+  background-color: transparent;
+}
+
+/* Features Section */
 .features-section {
-  margin-bottom: 40px;
+  padding: 40px 0 80px;
 }
 
 .feature-card {
-  text-align: center;
-  padding: 20px;
+  background: #ffffff;
+  padding: 40px 30px;
+  border-radius: 16px;
+  text-align: left;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
   height: 100%;
 }
 
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.05);
+}
+
+.icon-wrapper {
+  width: 56px;
+  height: 56px;
+  background-color: #f4f4f5;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
 .feature-card h3 {
-  margin: 16px 0 12px;
-  color: #303133;
+  font-size: 20px;
+  font-weight: 700;
+  color: #18181b;
+  margin-bottom: 12px;
 }
 
 .feature-card p {
-  color: #606266;
+  color: #71717a;
   line-height: 1.6;
+  font-size: 15px;
 }
 
-.stats-section {
-  margin-bottom: 40px;
-  padding: 30px;
-  background: #f5f7fa;
-  border-radius: 12px;
-}
-
-.stats-section h2 {
-  margin-bottom: 24px;
-  color: #303133;
-}
-
+/* Recent Posts */
 .recent-posts-section {
-  margin-bottom: 40px;
+  margin-top: 40px;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .section-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #18181b;
   margin: 0;
-  color: #303133;
+  position: relative;
+  padding-left: 16px;
+}
+
+.section-header h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 24px;
+  background-color: #18181b;
+  border-radius: 2px;
+}
+
+.view-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.view-all-btn:hover {
+  color: #18181b;
+  transform: translateX(2px);
 }
 </style>

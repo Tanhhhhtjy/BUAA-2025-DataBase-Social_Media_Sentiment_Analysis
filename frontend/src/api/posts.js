@@ -44,6 +44,14 @@ export const postsAPI = {
     })
   },
 
+  // 触发情感分析
+  analyzePost(id) {
+    return request({
+      url: `/posts/${id}/analyze`,
+      method: 'post'
+    })
+  },
+
   // 获取用户的帖子
   getUserPosts(userId, params) {
     return request({
@@ -77,6 +85,23 @@ export const postsAPI = {
       url: `/comments/post/${postId}`,
       method: 'get',
       params
+    })
+  },
+
+  // 获取用户的评论
+  getUserComments(userId, params) {
+    return request({
+      url: `/comments/user/${userId}`,
+      method: 'get',
+      params
+    })
+  },
+
+  // 删除评论
+  deleteComment(commentId) {
+    return request({
+      url: `/comments/${commentId}`,
+      method: 'delete'
     })
   }
 }

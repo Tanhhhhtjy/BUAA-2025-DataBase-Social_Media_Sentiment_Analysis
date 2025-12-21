@@ -23,6 +23,9 @@ public interface SentimentMapper {
     int updateSentiment(@Param("postId") Long postId, @Param("sentiment") String sentiment,
                         @Param("confidence") BigDecimal confidence);
 
+    int insertOrUpdate(@Param("postId") Long postId, @Param("sentiment") String sentiment,
+                       @Param("confidence") BigDecimal confidence);
+
     int deleteByPostId(@Param("postId") Long postId);
 
     List<Map<String, Object>> getSentimentDistribution(@Param("startDate") LocalDateTime startDate,

@@ -1,36 +1,27 @@
 <template>
   <div class="post-list-view">
     <div class="page-header">
-      <h2>{{ pageTitle }}</h2>
-      <el-button type="primary" @click="showCreateDialog = true">
+      <div class="header-content">
+        <h2>{{ pageTitle }}</h2>
+        <p class="subtitle" v-if="!hashtagId">探索最新的观点与讨论</p>
+      </div>
+      <el-button type="primary" size="large" round class="create-btn" @click="showCreateDialog = true">
         <el-icon><Plus /></el-icon>
         发布帖子
       </el-button>
     </div>
 
-    <div class="filters">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="搜索帖子内容..."
-        style="width: 300px"
-        clearable
-        @clear="handleSearch"
-      >
-        <template #append>
-          <el-button :icon="Search" @click="handleSearch" />
-        </template>
-      </el-input>
-    </div>
-
     <div class="posts-container" v-loading="loading">
       <template v-if="posts.length > 0">
-        <PostCard
-          v-for="post in posts"
-          :key="post.postId"
-          :post="post"
-          @delete="handleDeletePost"
-          @update="handleUpdatePost"
-        />
+        <div class="post-grid">
+          <PostCard
+            v-for="post in posts"
+            :key="post.postId"
+            :post="post"
+            @delete="handleDeletePost"
+            @update="handleUpdatePost"
+          />
+        </div>
       </template>
       <el-empty v-else description="暂无帖子数据" />
 
@@ -45,37 +36,35 @@
 
     <el-dialog
       v-model="showCreateDialog"
-      title="发布帖子"
+      title="发布新帖子"
       width="600px"
       :close-on-click-modal="false"
+      class="custom-dialog"
     >
-      <el-form :model="newPost" label-width="80px">
-        <el-form-item label="内容" required>
+      <el-form :model="newPost" label-width="0">
+        <el-form-item required>
           <el-input
             v-model="newPost.content"
             type="textarea"
             :rows="6"
-            placeholder="请输入帖子内容，支持 #话题# 格式"
+            placeholder="分享你的想法... (使用 #话题# 添加标签)"
             maxlength="5000"
             show-word-limit
+            class="custom-textarea"
           />
         </el-form-item>
         <div class="hashtag-tips">
-          <el-alert
-            title="使用话题标签"
-            type="info"
-            :closable="false"
-            show-icon
-          >
-            在帖子中使用 #话题名称# 的格式自动提取话题
-          </el-alert>
+          <el-icon><InfoFilled /></el-icon>
+          <span>提示：在内容中输入 #话题名称# 即可自动生成话题标签</span>
         </div>
       </el-form>
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleCreatePost" :loading="creating">
-          发布
-        </el-button>
+        <div class="dialog-footer">
+          <el-button @click="showCreateDialog = false" round>取消</el-button>
+          <el-button type="primary" @click="handleCreatePost" :loading="creating" round>
+            发布
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -87,7 +76,7 @@ import { useRoute } from 'vue-router'
 import { usePostsStore } from '../stores/posts'
 import { hashtagsAPI } from '../api/hashtags'
 import { ElMessage } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Plus, InfoFilled } from '@element-plus/icons-vue'
 import PostCard from '../components/PostCard.vue'
 import Pagination from '../components/Pagination.vue'
 
@@ -100,7 +89,6 @@ const hashtagName = ref('')
 const loading = ref(false)
 const creating = ref(false)
 const showCreateDialog = ref(false)
-const searchKeyword = ref('')
 const newPost = ref({
   content: ''
 })
@@ -112,9 +100,9 @@ const totalElements = computed(() => postsStore.pagination.totalElements)
 
 const pageTitle = computed(() => {
   if (hashtagId.value && hashtagName.value) {
-    return `帖子列表(#${hashtagName.value})`
+    return `#${hashtagName.value}`
   }
-  return '帖子列表'
+  return '社区动态'
 })
 
 const fetchHashtagInfo = async () => {
@@ -154,10 +142,6 @@ const handlePageChange = ({ page, size }) => {
   fetchPosts(page - 1, size)
 }
 
-const handleSearch = () => {
-  fetchPosts(0, pageSize.value)
-}
-
 const handleCreatePost = async () => {
   if (!newPost.value.content.trim()) {
     ElMessage.warning('请输入帖子内容')
@@ -192,6 +176,15 @@ const handleUpdatePost = (updatedPost) => {
   fetchPosts(currentPage.value - 1, pageSize.value)
 }
 
+// 监听路由参数变化，当 hashtagId 改变时重新获取数据
+watch(hashtagId, async (newId, oldId) => {
+  if (newId !== oldId) {
+    hashtagName.value = ''
+    await fetchHashtagInfo()
+    fetchPosts()
+  }
+})
+
 onMounted(async () => {
   await fetchHashtagInfo()
   fetchPosts()
@@ -201,29 +194,108 @@ onMounted(async () => {
 <style scoped>
 .post-list-view {
   padding: 20px 0;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .page-header {
+  position: relative;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 40px;
+  padding: 0 20px;
 }
 
-.page-header h2 {
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.header-content h2 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #18181b;
+  margin: 0 0 8px 0;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  color: #71717a;
+  font-size: 16px;
   margin: 0;
-  color: #303133;
 }
 
-.filters {
-  margin-bottom: 20px;
+.create-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 4px 12px rgba(24, 24, 27, 0.2);
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .create-btn {
+    position: static;
+    transform: none;
+  }
 }
 
 .posts-container {
   min-height: 400px;
 }
 
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 900px) {
+  .post-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 弹窗样式 */
 .hashtag-tips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 12px;
+  color: #71717a;
+  font-size: 13px;
+  background-color: #f4f4f5;
+  padding: 10px 16px;
+  border-radius: 8px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+:deep(.custom-textarea .el-textarea__inner) {
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  border-color: transparent;
+  font-size: 16px;
+  box-shadow: none;
+}
+
+:deep(.custom-textarea .el-textarea__inner:focus) {
+  background-color: #ffffff;
+  border-color: #18181b;
+  box-shadow: 0 0 0 1px #18181b;
 }
 </style>

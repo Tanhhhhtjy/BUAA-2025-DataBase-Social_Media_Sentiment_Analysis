@@ -192,6 +192,14 @@ public class PostService {
         return response;
     }
 
+    public void triggerSentimentAnalysis(Long postId) {
+        Post post = postMapper.findById(postId);
+        if (post == null) {
+            throw new IllegalArgumentException("帖子不存在");
+        }
+        sentimentService.triggerAsyncAnalysis(postId, post.getContent());
+    }
+
     private PostResponse buildFullPostResponse(Post post) {
         PostResponse response = new PostResponse(post);
 

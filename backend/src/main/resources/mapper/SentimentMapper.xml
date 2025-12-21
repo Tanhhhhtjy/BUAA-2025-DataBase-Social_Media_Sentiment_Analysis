@@ -44,6 +44,15 @@
         WHERE post_id = #{postId}
     </update>
 
+    <insert id="insertOrUpdate">
+        INSERT INTO post_sentiments (post_id, sentiment, confidence, analyzed_at, created_at)
+        VALUES (#{postId}, #{sentiment}, #{confidence}, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+            sentiment = #{sentiment},
+            confidence = #{confidence},
+            analyzed_at = NOW()
+    </insert>
+
     <delete id="deleteByPostId">
         DELETE FROM post_sentiments WHERE post_id = #{postId}
     </delete>

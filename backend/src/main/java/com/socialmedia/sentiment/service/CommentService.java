@@ -94,6 +94,29 @@ public class CommentService {
         commentMapper.deleteById(commentId);
     }
 
+    public PageResponse<CommentResponse> getCommentsByUserId(Long userId, int page, int size) {
+        int offset = page * size;
+        List<Comment> comments = commentMapper.findByUserId(userId, offset, size);
+        long total = commentMapper.countByUserId(userId);
+
+        List<CommentResponse> responses = comments.stream()
+                .map(this::buildCommentResponseWithPost)
+                .collect(Collectors.toList());
+
+        return new PageResponse<>(responses, page, size, total);
+    }
+
+    private CommentResponse buildCommentResponseWithPost(Comment comment) {
+        CommentResponse response = buildCommentResponse(comment);
+        Post post = postMapper.findById(comment.getPostId());
+        if (post != null) {
+            response.setPostContent(post.getContent().length() > 50
+                ? post.getContent().substring(0, 50) + "..."
+                : post.getContent());
+        }
+        return response;
+    }
+
     private CommentResponse buildCommentResponse(Comment comment) {
         CommentResponse response = new CommentResponse(comment);
         User user = userMapper.findById(comment.getUserId());

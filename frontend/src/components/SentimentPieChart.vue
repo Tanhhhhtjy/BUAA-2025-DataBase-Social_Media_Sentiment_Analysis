@@ -1,5 +1,5 @@
 <template>
-  <div ref="chartContainer" class="sentiment-pie-chart"></div>
+  <div ref="chartContainer" class="sentiment-pie-chart" :style="{ height: height + 'px' }"></div>
 </template>
 
 <script setup>

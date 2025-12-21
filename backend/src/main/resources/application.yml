@@ -22,11 +22,11 @@ spring:
 
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:dummy}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+      api-key: sk-yganwkjvyvabdsimperpzrzqmzxfjqozfyyipplllkkuhpfi
+      base-url: https://api.siliconflow.cn
       chat:
         options:
-          model: ${OPENAI_MODEL:gpt-3.5-turbo}
+          model: Qwen/Qwen2.5-7B-Instruct
           temperature: 0.3
 
 # JWT Configuration

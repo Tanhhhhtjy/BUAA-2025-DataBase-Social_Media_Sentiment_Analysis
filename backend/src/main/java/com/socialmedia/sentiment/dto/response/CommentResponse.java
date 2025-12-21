@@ -11,6 +11,7 @@ public class CommentResponse {
     private Long userId;
     private String username;
     private String content;
+    private String postContent;
     private LocalDateTime createdAt;
 
     public CommentResponse() {}
@@ -61,6 +62,14 @@ public class CommentResponse {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getPostContent() {
+        return postContent;
+    }
+
+    public void setPostContent(String postContent) {
+        this.postContent = postContent;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -84,4 +84,14 @@ public class PostController {
         response.put("message", "帖子删除成功");
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{postId}/analyze")
+    public ResponseEntity<Map<String, Object>> analyzePost(@PathVariable Long postId) {
+        postService.triggerSentimentAnalysis(postId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "情感分析已触发");
+        return ResponseEntity.ok(response);
+    }
 }

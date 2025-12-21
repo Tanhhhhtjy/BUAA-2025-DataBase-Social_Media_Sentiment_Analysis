@@ -1,5 +1,5 @@
 <template>
-  <div ref="chartContainer" class="hot-topics-chart"></div>
+  <div ref="chartContainer" class="hot-topics-chart" :style="{ height: height + 'px' }"></div>
 </template>
 
 <script setup>

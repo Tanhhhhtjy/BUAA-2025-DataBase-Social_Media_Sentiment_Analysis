@@ -42,6 +42,15 @@ public class CommentController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<PageResponse<CommentResponse>> getCommentsByUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResponse<CommentResponse> response = commentService.getCommentsByUserId(userId, page, size);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Map<String, Object>> deleteComment(@PathVariable Long commentId,
                                                              HttpServletRequest httpRequest) {
